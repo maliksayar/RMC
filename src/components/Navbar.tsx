@@ -118,9 +118,7 @@ export const Navbar: React.FC = () => {
               className="shrink-0 flex items-center pr-4 xl:pr-6 focus:outline-hidden group"
               title="Reality Mind Clinic"
             >
-              <div className="w-12 h-12 text-neutral-950 group-hover:scale-105 transition-transform duration-200">
-                <ClinicLogo size="md" showWordmark={false} />
-              </div>
+              <ClinicLogo size="md" showWordmark={false} />
             </Link>
 
             {/* Center: Navigation Links with balanced uniform spacing */}

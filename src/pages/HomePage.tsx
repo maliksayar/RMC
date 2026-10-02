@@ -142,37 +142,15 @@ export const HomePage: React.FC = () => {
               </button>
             </div>
 
-            {/* Tech Specs & Meta Grid matching Synopsis Page 1 */}
-            <div className="mt-12 w-full grid grid-cols-1 sm:grid-cols-3 border-t border-neutral-200 pt-6 text-xs text-neutral-600 gap-4 sm:gap-0">
-              <div className="sm:border-r sm:border-neutral-200 sm:pr-4">
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-neutral-400">
-                  Tech Stack
-                </span>
-                <span className="font-semibold text-neutral-800">React + Firebase + Cloudinary</span>
-              </div>
-              <div className="sm:border-r sm:border-neutral-200 sm:px-4">
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-neutral-400">
-                  Typography
-                </span>
-                <span className="font-semibold text-neutral-800">Garamond + Plus Jakarta Sans</span>
-              </div>
-              <div className="sm:pl-4">
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-neutral-400">
-                  Platform
-                </span>
-                <span className="font-semibold text-neutral-800">Web Responsive · Tak Mohalla Road</span>
-              </div>
-            </div>
-
-            {/* Location & Contact Bar */}
-            <div className="mt-6 pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between w-full text-xs text-neutral-500 gap-2">
+            {/* Location & Practice Contact Bar */}
+            <div className="mt-10 pt-5 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between w-full text-xs text-neutral-600 gap-2">
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-neutral-700" />
-                <span>Tak Mohalla Road, Bijbehara, Anantnag - 192124</span>
+                <span>Tak Mohalla Road, Bijbehara, Anantnag — 192124</span>
               </div>
               <div className="flex items-center gap-3">
                 <a href="tel:6005754205" className="hover:text-black font-semibold">
-                  Contact: 6005754205
+                  Contact: +91 6005754205
                 </a>
               </div>
             </div>

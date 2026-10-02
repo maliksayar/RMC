@@ -23,6 +23,7 @@
   "dependencies": {
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.50.0",
+    "pngjs": "^7.0.0",
     "potrace": "^2.1.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
