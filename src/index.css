@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-heading: 'EB Garamond', Garamond, Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #121212;
+    background-color: #fafafa;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, .font-serif {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Custom editorial styling */
+.font-garamond {
+  font-family: 'EB Garamond', Garamond, Georgia, serif;
+}
+
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Synopsis classic bordered card aesthetic */
+.card-frame {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-frame:hover {
+  border-color: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+.synopsis-border {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+/* Breathing animation for Diaphragmatic Breathing tool */
+@keyframes breatheCycle {
+  0% { transform: scale(1); opacity: 0.6; }
+  35% { transform: scale(1.6); opacity: 1; }
+  55% { transform: scale(1.6); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.6; }
+}
+
+.animate-breathe {
+  animation: breatheCycle 14s ease-in-out infinite;
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #a3a3a3;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #737373;
+}
