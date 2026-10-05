@@ -5,9 +5,13 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
 import { ServicesPage } from './pages/ServicesPage';
-import { LibraryPage } from './pages/LibraryPage';
+import { ResourcesPage } from './pages/ResourcesPage';
 import { ArticlesPage } from './pages/ArticlesPage';
 import { ContactPage } from './pages/ContactPage';
+import { AboutPage } from './pages/AboutPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsOfUsePage } from './pages/TermsOfUsePage';
+import { DisclaimerPage } from './pages/DisclaimerPage';
 import { PsychologistDashboard } from './pages/PsychologistDashboard';
 import { PatientPortal } from './pages/PatientPortal';
 import { PinUnlockModal } from './components/PinUnlockModal';
@@ -33,10 +37,15 @@ export const AppContent: React.FC = () => {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/services" element={<ServicesPage />} />
-          <Route path="/interventions" element={<LibraryPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/interventions" element={<ResourcesPage />} />
           <Route path="/articles" element={<ArticlesPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfUsePage />} />
+          <Route path="/disclaimer" element={<DisclaimerPage />} />
           <Route path="/psychologist-dashboard" element={<PsychologistDashboard />} />
           <Route path="/patient-portal" element={<PatientPortal />} />
           {/* Catch-all fallback */}

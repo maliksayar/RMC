@@ -14,7 +14,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, .font-serif {
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-serif {
     font-family: var(--font-heading);
     letter-spacing: -0.015em;
   }
@@ -47,10 +51,25 @@
 
 /* Breathing animation for Diaphragmatic Breathing tool */
 @keyframes breatheCycle {
-  0% { transform: scale(1); opacity: 0.6; }
-  35% { transform: scale(1.6); opacity: 1; }
-  55% { transform: scale(1.6); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.6; }
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  35% {
+    transform: scale(1.6);
+    opacity: 1;
+  }
+
+  55% {
+    transform: scale(1.6);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
 }
 
 .animate-breathe {
@@ -62,13 +81,16 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #a3a3a3;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #737373;
 }

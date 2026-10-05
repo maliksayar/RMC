@@ -1,23 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import {
   KeyRound,
   Calendar,
-  ShieldCheck,
-  Brain,
-  Sparkles,
-  ArrowRight,
-  CheckCircle,
   Phone,
-  Video,
   MapPin,
-  Lock,
-  Unlock,
-  Play,
-  HeartHandshake,
-  Layers,
-  HelpCircle,
-  Clock
+  Clock,
+  Maximize2,
+  X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ClinicLogo } from '../components/ClinicLogo';
@@ -25,77 +14,83 @@ import { ClinicLogo } from '../components/ClinicLogo';
 export const HomePage: React.FC = () => {
   const {
     setPinModalOpen,
-    setBookingModalOpen,
-    interventions,
-    unlockedVideoIds,
-    setActiveVideo,
-    articles,
-    setActiveArticle
+    setBookingModalOpen
   } = useApp();
 
-  const treatmentAreas = [
+  const [galleryModalOpen, setGalleryModalOpen] = React.useState(false);
+
+  const helpAreas = [
     {
-      title: 'Anxiety',
-      desc: 'Panic attacks, somatic tension, social anxiety, and autonomic hyperarousal.',
-      interventions: 'Diaphragmatic Breathing, 5-4-3-2-1 Grounding, CBT Basics'
+      title: 'Anxiety & Excessive Worry',
+      desc: 'Persistent worry, nervousness, restlessness, or feeling constantly on edge. You may find it difficult to switch off your thoughts, relax, concentrate, or feel reassured even when things are objectively safe.'
     },
     {
-      title: 'Depression',
-      desc: 'Pervasive low mood, loss of interest, cognitive fog, and motivational inertia.',
-      interventions: 'Behavioural Activation, CBT Restructuring'
+      title: 'Panic Attacks & Fear',
+      desc: 'Sudden episodes of intense fear or discomfort that may involve a racing heart, breathlessness, dizziness, trembling, chest discomfort, or a feeling that something is seriously wrong. Some people also develop fear of having another attack.'
     },
     {
-      title: 'OCD',
-      desc: 'Intrusive obsessions and compulsive checking, washing, or mental neutralizing.',
-      interventions: 'Exposure and Response Prevention (ERP)'
+      title: 'Social Anxiety',
+      desc: 'Intense fear of being judged, embarrassed, rejected, or negatively evaluated by others. You may avoid conversations, social situations, speaking in front of people, or situations where you feel observed.'
     },
     {
-      title: 'Overthinking',
-      desc: 'Chronic catastrophic rumination, decision paralysis, and relentless mental loops.',
-      interventions: 'Thought Defusion, Worry Postponement, Mindfulness'
+      title: 'Phobias',
+      desc: 'Strong and persistent fear of a particular object, situation, place, animal, medical procedure, or other trigger. The fear may lead to avoidance even when you know the situation is unlikely to cause serious harm.'
     },
     {
-      title: 'Fear & Phobias',
-      desc: 'Specific triggers, agoraphobia, claustrophobia, and avoidance behaviors.',
-      interventions: 'Systematic Desensitization, Guided Imagery'
+      title: 'OCD (Obsessions & Compulsions)',
+      desc: 'Unwanted and intrusive thoughts, images, or urges that cause distress, along with repetitive behaviours or mental rituals used to reduce anxiety or prevent something feared from happening.'
     },
     {
-      title: 'Sleep Problems',
-      desc: 'Chronic sleep-onset insomnia, middle-of-the-night waking, and racing thoughts.',
-      interventions: 'CBT for Insomnia (CBT-I), PMR, Self-Hypnosis'
+      title: 'Depression & Low Mood',
+      desc: 'Persistent sadness, emptiness, loss of interest or pleasure, low motivation, fatigue, changes in sleep or appetite, feelings of hopelessness, or difficulty managing everyday responsibilities.'
+    },
+    {
+      title: 'Trauma-Related Difficulties',
+      desc: 'Distressing memories or reminders of a traumatic experience, avoidance, heightened alertness, strong emotional or physical reactions, nightmares, difficulty feeling safe, or changes in mood and relationships.'
+    },
+    {
+      title: 'Dissociation & Disconnection',
+      desc: 'Feeling detached from yourself or your surroundings, feeling emotionally numb or unreal, losing track of periods of time, or experiencing a sense of disconnection from your thoughts, emotions, body, or surroundings.'
+    },
+    {
+      title: 'Stress & Sleep Difficulties',
+      desc: 'Ongoing stress, emotional overwhelm, difficulty switching off, racing thoughts at night, difficulty falling or staying asleep, or feeling mentally and physically exhausted.'
     }
   ];
 
-  const howItWorksSteps = [
+  const considerHelpPoints = [
+    'Constant worry, nervousness, or feeling on edge, even when things seem okay',
+    'Sudden intense fear or panic, with a racing heart, breathlessness, dizziness, trembling, or a feeling that something is seriously wrong',
+    'Low mood, sadness, loss of interest, low energy, or difficulty managing everyday life',
+    'Unwanted thoughts or images that keep coming back, along with repeated checking, cleaning, counting, or other actions that feel difficult to stop',
+    'Avoiding people, places, situations, or activities because you are afraid, uncomfortable, or worried about what might happen',
+    'Disturbing memories, nightmares, or feeling unusually alert or unsafe after a stressful or traumatic experience',
+    'Feeling disconnected from yourself or your surroundings, emotionally numb, unreal, or as if things are happening from a distance',
+    'Difficulty sleeping, racing thoughts at night, or feeling tired most of the time',
+    'Physical symptoms that become worse during stress, such as headaches, muscle tension, stomach discomfort, or digestive problems',
+    'Changes in eating or appetite that seem connected to periods of stress or emotional distress'
+  ];
+
+  const whyUsPoints = [
     {
-      step: '1',
-      title: 'Patient Registration',
-      desc: 'Secure account creation powered by Firebase Auth, with private role-based patient profiles.'
+      title: 'Beyond Symptoms',
+      desc: 'Therapy goes beyond treating symptoms. We work with the underlying beliefs, learned patterns, emotions, and behaviours that can contribute to psychological difficulties.'
     },
     {
-      step: '2',
-      title: 'Consultation Booking',
-      desc: 'Book an in-clinic consultation at Tak Mohalla Road, Bijbehara or an online video/audio session.'
+      title: 'Specialized Clinical Hypnotherapy',
+      desc: 'Clinical hypnotherapy is a specialized focus of our practice, used therapeutically for concerns such as anxiety, panic, phobias, trauma-related difficulties, stress, and sleep problems, where clinically appropriate.'
     },
     {
-      step: '3',
-      title: 'Psychological Consultation',
-      desc: 'The Psychologist conducts diagnostic formulation and identifies core maintaining mechanisms.'
+      title: 'Integrative Therapeutic Approach',
+      desc: "Different difficulties require different approaches. We may combine CBT, REBT, clinical hypnotherapy, and other psychological methods according to the individual's needs."
     },
     {
-      step: '4',
-      title: 'Prescription & PIN Generation',
-      desc: 'The Psychologist selects targeted intervention videos and issues a unique, time-limited PIN.'
+      title: 'Therapeutic Intervention Training',
+      desc: 'Appropriate therapeutic interventions are personally demonstrated and practised under the guidance and supervision of the therapist, so clients understand how to perform them correctly and safely.'
     },
     {
-      step: '5',
-      title: 'Secure Interventions Unlock',
-      desc: 'The patient enters the PIN to stream private clinical exercises via signed, encrypted media links.'
-    },
-    {
-      step: '6',
-      title: 'Continuous Guided Recovery',
-      desc: 'Daily practice, symptom monitoring, appointment follow-ups, and psychoeducational guidance.'
+      title: 'Personalized Therapeutic Intervention Plan',
+      desc: 'When appropriate, clients receive a personalized Therapeutic Intervention Plan (TIP) outlining the interventions recommended for practice between consultations, along with access to selected therapeutic resources through a private clinic-provided PIN.'
     }
   ];
 
@@ -113,12 +108,11 @@ export const HomePage: React.FC = () => {
 
             {/* Subtitle */}
             <h1 className="font-garamond text-2xl sm:text-4xl lg:text-5xl font-bold text-neutral-950 mt-6 max-w-3xl leading-tight">
-              A Web-Based Psychological Consultation and Patient Guidance Platform
+              Psychotherapy & Clinical Hypnotherapy — In-Clinic & Online
             </h1>
 
             <p className="text-neutral-600 text-xs sm:text-base max-w-2xl mt-4 leading-relaxed font-sans">
-              Bridging in-clinic psychological practice with continuous digital therapeutic guidance.
-              Consult online or in-clinic at Bijbehara, and receive personalized PIN-unlocked intervention videos for verified, lasting recovery.
+              Evidence-informed psychological care tailored to your needs, with personalized therapeutic interventions and guidance beyond the consultation room.
             </p>
 
             {/* Primary Action Buttons */}
@@ -158,403 +152,371 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* SECTION 1 & 2: INTRODUCTION & OBJECTIVE */}
+      {/* SECTION 1: ABOUT REALITY MIND CLINIC */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="border border-neutral-200 bg-white p-8 rounded-lg space-y-4">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-              Section 1
-            </span>
-            <h2 className="font-garamond text-3xl font-bold text-neutral-950">
-              Clinical Introduction
-            </h2>
-            <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
-              Reality Mind Clinic is a web-based psychological consultation and patient guidance platform. It brings the clinic's practice online by offering online and offline appointment booking, private educational videos on specific psychological interventions, and psychology-related blogs and articles.
+        <div className="border border-neutral-200 bg-white p-8 sm:p-10 rounded-lg space-y-4">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+            Section 1
+          </span>
+          <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
+            About Reality Mind Clinic
+          </h2>
+          <div className="space-y-3 max-w-4xl text-neutral-700 text-xs sm:text-sm leading-relaxed font-sans">
+            <p>
+              Reality Mind Clinic provides psychotherapy and clinical hypnotherapy through both in-clinic and online consultations.
             </p>
-            <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
-              Patients register on the platform and book appointments with the Psychologist, either online or in the clinic. After a consultation, the Psychologist can issue a unique PIN/access code to a specific patient, unlocking selected private intervention videos meant for that patient's care.
+            <p>
+              Alongside consultations, clients may receive personalized therapeutic interventions and guidance to support their work between sessions. Selected resources are securely accessed through a private PIN provided by the clinic.
             </p>
-          </div>
-
-          <div className="border border-neutral-200 bg-white p-8 rounded-lg space-y-4">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-              Section 2
-            </span>
-            <h2 className="font-garamond text-3xl font-bold text-neutral-950">
-              Clinical Objective
-            </h2>
-            <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
-              To provide patients with professional psychological consultation and continuous guidance through appointments, personalized private intervention videos, and educational written content, while giving the Psychologist complete control over patient access and content management.
+            <p>
+              The website also provides simple, evidence-informed educational resources to help you understand psychological difficulties, psychotherapy, and different therapeutic approaches.
             </p>
-            <div className="p-4 bg-neutral-50 border-l-2 border-neutral-900 rounded-r text-xs text-neutral-800 italic mt-4">
-              "Ensuring the patient is never left stranded between consultations, by supplying tailored video exercises and clear step-by-step psychological homework."
-            </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 3: CLINIC SERVICES */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="border-b border-neutral-200 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
+      {/* SECTION 2: WHAT CAN I HELP YOU WITH? */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border border-neutral-200 bg-white p-8 sm:p-10 rounded-lg space-y-6">
+          <div className="max-w-3xl space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+              Section 2
+            </span>
+            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
+              What Can I Help You With?
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans pt-1">
+              Psychological difficulties can affect thoughts, emotions, behaviour, relationships, and everyday functioning. Understanding what you're experiencing is the first step toward finding appropriate care.
+            </p>
+          </div>
+
+          {/* 9 Difficulties Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
+            {helpAreas.map((item, idx) => (
+              <div
+                key={idx}
+                className="border border-neutral-200 bg-neutral-50/50 p-6 rounded-lg hover:border-neutral-900 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-garamond text-xl font-bold text-neutral-950 leading-snug">
+                      {item.title}
+                    </h3>
+                    <span className="text-[10px] font-mono text-neutral-400 shrink-0">
+                      0{idx + 1}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-[13px] text-neutral-600 mt-2.5 leading-relaxed font-sans">
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Clinical Assessment Disclaimer */}
+          <div className="p-4 bg-neutral-50 border-l-2 border-neutral-900 rounded-r text-xs sm:text-sm text-neutral-700 italic">
+            These descriptions are not a diagnosis. Similar experiences can occur for different reasons, and a professional assessment can help clarify what may be happening.
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: WHEN TO CONSIDER PROFESSIONAL HELP */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border border-neutral-200 bg-white p-8 sm:p-10 rounded-lg space-y-6">
+          <div className="max-w-3xl space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
               Section 3
             </span>
             <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
-              Clinic Services
+              When to Consider Professional Help
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-600 mt-1">
-              The platform presents the exact clinical services offered at our Bijbehara center:
-            </p>
-          </div>
-          <Link
-            to="/services"
-            className="text-xs font-semibold uppercase tracking-wider text-black flex items-center gap-1 hover:underline"
-          >
-            <span>View Detailed Modalities</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Psychotherapy */}
-          <div className="border border-neutral-200 bg-white p-6 rounded-lg space-y-4 hover:border-black transition-all">
-            <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-              <Brain className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400">
-                Talk-Based Therapy
-              </span>
-              <h3 className="font-garamond text-2xl font-bold text-neutral-950 mt-0.5">
-                Psychotherapy
-              </h3>
-            </div>
-            <p className="text-xs text-neutral-600 leading-relaxed">
-              Structured talk-based therapy to understand and change unhelpful thoughts, emotions, and behaviour. Grounded in Cognitive Behavioural Therapy (CBT) and Acceptance & Commitment frameworks.
-            </p>
-            <div className="pt-2 text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-neutral-900" />
-              <span>CBT, ERP & Behavioural Activation</span>
-            </div>
-          </div>
-
-          {/* Clinical Hypnotherapy */}
-          <div className="border border-neutral-200 bg-white p-6 rounded-lg space-y-4 hover:border-black transition-all">
-            <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400">
-                Subconscious Reframing
-              </span>
-              <h3 className="font-garamond text-2xl font-bold text-neutral-950 mt-0.5">
-                Clinical Hypnotherapy
-              </h3>
-            </div>
-            <p className="text-xs text-neutral-600 leading-relaxed">
-              Guided, clinically applied hypnosis and relaxation techniques to support therapeutic change. Unlocking subconscious pathways for habit breaking, deep stress relief, and phobia resolution.
-            </p>
-            <div className="pt-2 text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-neutral-900" />
-              <span>Self-Hypnosis & Trance Inductions</span>
-            </div>
-          </div>
-
-          {/* Mental Health & Wellbeing */}
-          <div className="border border-neutral-200 bg-white p-6 rounded-lg space-y-4 hover:border-black transition-all">
-            <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-              <HeartHandshake className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400">
-                Preventative Resilience
-              </span>
-              <h3 className="font-garamond text-2xl font-bold text-neutral-950 mt-0.5">
-                Mental Health & Wellbeing
-              </h3>
-            </div>
-            <p className="text-xs text-neutral-600 leading-relaxed">
-              Ongoing guidance, psychoeducation, and self-care practices for emotional balance, sleep hygiene, and long-term psychological resilience.
-            </p>
-            <div className="pt-2 text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-neutral-900" />
-              <span>Lifestyle Entrainment & Stress Buffering</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 4: TREATMENT AREAS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="border-b border-neutral-200 pb-4">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-            Section 4
-          </span>
-          <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
-            Treatment Areas
-          </h2>
-          <p className="text-xs sm:text-sm text-neutral-600 mt-1">
-            Specialized psychological care pathways addressing high-prevalence psychiatric and emotional concerns:
-          </p>
-        </div>
-
-        {/* Treatment Areas Table Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {treatmentAreas.map((area, idx) => (
-            <div
-              key={idx}
-              className="border border-neutral-200 bg-white p-5 rounded-md hover:border-neutral-900 transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="font-garamond text-xl font-bold text-neutral-950">
-                    {area.title}
-                  </h3>
-                  <span className="text-[10px] font-mono text-neutral-400">
-                    AREA 0{idx + 1}
-                  </span>
-                </div>
-                <p className="text-xs text-neutral-600 mt-2 leading-relaxed">
-                  {area.desc}
-                </p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-neutral-100 text-[11px] text-neutral-500">
-                <span className="font-semibold text-neutral-900 block mb-0.5">Assigned Interventions:</span>
-                <span>{area.interventions}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTION 7 & 8: HOW IT WORKS + PRIVATE INTERVENTION PREVIEW */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="bg-neutral-900 text-white rounded-xl p-8 sm:p-12 space-y-10">
-          <div className="max-w-3xl space-y-3">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-              Section 8 · Patient Journey
-            </span>
-            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-white">
-              How the Consultation & Video Prescription System Works
-            </h2>
-            <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed font-sans">
-              Unlike generic self-help apps, Reality Mind Clinic couples clinical diagnosis with private, doctor-controlled video access codes.
+            <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans pt-1">
+              You may consider professional support if you often experience:
             </p>
           </div>
 
-          {/* 6 Step Sequence */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {howItWorksSteps.map((s) => (
+          {/* Checklist / Indicators Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-2">
+            {considerHelpPoints.map((point, idx) => (
               <div
-                key={s.step}
-                className="border border-neutral-800 bg-neutral-950/60 p-5 rounded-lg space-y-2 relative"
+                key={idx}
+                className="flex items-start gap-3 p-4 rounded-md border border-neutral-200/80 bg-neutral-50/50 hover:border-neutral-900 transition-colors"
               >
-                <span className="text-3xl font-garamond font-bold text-neutral-600">
-                  0{s.step}
-                </span>
-                <h4 className="font-garamond text-lg font-bold text-neutral-100">
-                  {s.title}
-                </h4>
-                <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-                  {s.desc}
+                <div className="w-1.5 h-1.5 rounded-full bg-neutral-900 mt-2 shrink-0"></div>
+                <p className="text-xs sm:text-[13px] text-neutral-700 leading-relaxed font-sans">
+                  {point}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* PIN Action Callout */}
-          <div className="border border-neutral-700 bg-neutral-800/80 p-6 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="space-y-1">
-              <h4 className="font-garamond text-xl font-bold text-white flex items-center gap-2">
-                <KeyRound className="w-5 h-5 text-emerald-400" />
-                <span>Already Have a Doctor-Issued Access PIN?</span>
-              </h4>
-              <p className="text-xs text-neutral-300">
-                Enter your 6-character code (e.g. <span className="font-mono font-bold text-white">RMC-2026</span>) to unlock your prescribed video sessions.
-              </p>
+          {/* Impact & Call-to-action note */}
+          <div className="p-4 bg-neutral-50 border-l-2 border-neutral-900 rounded-r text-xs sm:text-sm text-neutral-800 font-medium leading-relaxed">
+            If these experiences are affecting your daily life, relationships, work, studies, or social life, it may be time to consider professional psychological support.
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: HOW THERAPY CAN HELP? */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border border-neutral-200 bg-white p-8 sm:p-10 rounded-lg space-y-8">
+          <div className="max-w-3xl space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+              Section 4
+            </span>
+            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
+              How Therapy Can Help?
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* What Is Psychotherapy */}
+            <div className="border border-neutral-200/90 bg-neutral-50/40 p-6 sm:p-8 rounded-lg space-y-4">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 block">
+                Evidence-Based Clinical Framework
+              </span>
+              <h3 className="font-garamond text-2xl sm:text-3xl font-bold text-neutral-950">
+                What Is Psychotherapy
+              </h3>
+              <div className="space-y-3.5 text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
+                <p>
+                  Psychotherapy is not simply talking about problems, receiving advice, or being told to “think positively.” It is a form of psychological treatment designed to create meaningful changes in the way a person thinks, feels, behaves, and responds to their experiences.
+                </p>
+                <p>
+                  It involves working therapeutically with the psychological patterns that contribute to and maintain distress — including learned beliefs, emotional responses, behaviours, memories, expectations, and ways of interpreting and responding to experiences.
+                </p>
+                <p>
+                  Some of these patterns develop through childhood and later life experiences and may continue to influence us automatically, without being fully within conscious awareness. Psychotherapy can help identify, examine, and modify these patterns, allowing new and more adaptive ways of thinking, feeling, and responding to develop.
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setPinModalOpen(true)}
-              className="bg-white text-black px-6 py-2.5 rounded font-semibold text-xs uppercase tracking-widest hover:bg-neutral-200 transition-colors shrink-0"
-            >
-              Enter PIN Now
-            </button>
+            {/* What Is Clinical Hypnotherapy */}
+            <div className="border border-neutral-200/90 bg-neutral-50/40 p-6 sm:p-8 rounded-lg space-y-4">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 block">
+                Focused Therapeutic State
+              </span>
+              <h3 className="font-garamond text-2xl sm:text-3xl font-bold text-neutral-950">
+                What Is Clinical Hypnotherapy
+              </h3>
+              <div className="space-y-3.5 text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
+                <p>
+                  Clinical hypnotherapy is not the kind of hypnosis portrayed in movies or stage performances. It is the therapeutic use of clinical hypnosis within psychological treatment.
+                </p>
+                <p>
+                  Clinical hypnosis involves focused attention and increased responsiveness to therapeutic suggestions. In an appropriate therapeutic context, it can be used to work with automatic responses, emotional patterns, learned associations, and other psychological processes that may not always be fully accessible to conscious awareness.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 7 PREVIEW: PRIVATE INTERVENTION LIBRARY */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="border-b border-neutral-200 pb-4 flex items-end justify-between">
-          <div>
+      {/* SECTION 5: WHY REALITY MIND CLINIC? */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border border-neutral-200 bg-white p-8 sm:p-10 rounded-lg space-y-6">
+          <div className="max-w-3xl space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-              Section 7 · Starting Library (13 Interventions)
+              Section 5
             </span>
             <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
-              Psychological Interventions Library
+              Why Reality Mind Clinic?
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-600 mt-1">
-              Each private video is named after a specific psychological intervention, assigned precisely after consultation.
-            </p>
           </div>
 
-          <Link
-            to="/interventions"
-            className="text-xs font-semibold uppercase tracking-wider text-black flex items-center gap-1 hover:underline"
-          >
-            <span>View All 13 Videos</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {/* 4 Featured Interventions Preview Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {interventions.slice(0, 4).map((video) => {
-            const isUnlocked = unlockedVideoIds.includes(video.id);
-
-            return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
+            {whyUsPoints.map((item, idx) => (
               <div
-                key={video.id}
-                className="border border-neutral-200 bg-white rounded-lg overflow-hidden flex flex-col justify-between hover:border-black transition-all group"
+                key={idx}
+                className="border border-neutral-200/90 bg-neutral-50/50 p-6 rounded-lg hover:border-neutral-900 transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="relative aspect-video bg-neutral-900 overflow-hidden">
-                    <img
-                      src={video.thumbnailUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-85"
-                    />
-                    <div className="absolute top-2 right-2">
-                      {isUnlocked ? (
-                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
-                          <Unlock className="w-2.5 h-2.5" />
-                          <span>Unlocked</span>
-                        </span>
-                      ) : (
-                        <span className="bg-black/75 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Lock className="w-2.5 h-2.5" />
-                          <span>Locked</span>
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute bottom-2 left-2 text-[10px] font-mono text-white bg-black/60 px-1.5 py-0.5 rounded">
-                      {video.duration}
-                    </div>
-                  </div>
-
-                  <div className="p-4 space-y-2">
-                    <span className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 block">
-                      {video.category}
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-garamond text-xl font-bold text-neutral-950 leading-snug">
+                      {item.title}
+                    </h3>
+                    <span className="text-[10px] font-mono text-neutral-400 shrink-0">
+                      0{idx + 1}
                     </span>
-                    <h4 className="font-garamond text-lg font-bold text-neutral-950 leading-snug">
-                      {video.title}
-                    </h4>
-                    <p className="text-[11px] text-neutral-600 line-clamp-2 leading-relaxed">
-                      {video.description}
-                    </p>
                   </div>
-                </div>
-
-                <div className="p-4 pt-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isUnlocked) {
-                        setActiveVideo(video);
-                      } else {
-                        setPinModalOpen(true);
-                      }
-                    }}
-                    className={`w-full py-2 rounded text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
-                      isUnlocked
-                        ? 'bg-black text-white hover:bg-neutral-800'
-                        : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'
-                    }`}
-                  >
-                    {isUnlocked ? (
-                      <>
-                        <Play className="w-3.5 h-3.5" />
-                        <span>Launch Session</span>
-                      </>
-                    ) : (
-                      <>
-                        <KeyRound className="w-3.5 h-3.5" />
-                        <span>Enter PIN to Play</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* PSYCHOEDUCATION BLOG SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="border-b border-neutral-200 pb-4 flex items-end justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-              Section 5 · Clinical Articles
-            </span>
-            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
-              Psychology Guidance & Articles
-            </h2>
-            <p className="text-xs sm:text-sm text-neutral-600 mt-1">
-              Public psychoeducation on anxiety, sleep, and overthinking curated by our clinical team.
-            </p>
-          </div>
-
-          <Link
-            to="/articles"
-            className="text-xs font-semibold uppercase tracking-wider text-black flex items-center gap-1 hover:underline"
-          >
-            <span>View All Articles</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {articles.map((art) => (
-            <div
-              key={art.id}
-              onClick={() => setActiveArticle(art)}
-              className="border border-neutral-200 bg-white rounded-lg overflow-hidden hover:border-black transition-all cursor-pointer flex flex-col justify-between group"
-            >
-              <div>
-                <div className="aspect-16/9 overflow-hidden bg-neutral-100">
-                  <img
-                    src={art.coverImage}
-                    alt={art.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-5 space-y-2">
-                  <div className="flex items-center justify-between text-[10px] text-neutral-500 font-mono">
-                    <span className="uppercase font-bold tracking-wider">{art.category}</span>
-                    <span>{art.readTime}</span>
-                  </div>
-                  <h4 className="font-garamond text-xl font-bold text-neutral-950 leading-snug group-hover:underline">
-                    {art.title}
-                  </h4>
-                  <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed">
-                    {art.summary}
+                  <p className="text-xs sm:text-[13px] text-neutral-600 mt-2.5 leading-relaxed font-sans">
+                    {item.desc}
                   </p>
                 </div>
               </div>
-
-              <div className="p-5 pt-0 text-xs font-semibold text-neutral-900 flex items-center gap-1">
-                <span>Read Full Guidance</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* SECTION 6: MEET THE THERAPIST */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border border-neutral-200 bg-white p-8 sm:p-12 rounded-lg space-y-8">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+              Section 6 · Practice Leadership
+            </span>
+            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950 mt-1">
+              Meet the Therapist
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Therapist Formal Portrait */}
+            <div className="lg:col-span-4 max-w-sm mx-auto lg:mx-0 w-full">
+              <div className="relative aspect-3/4 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 shadow-sm group">
+                <img
+                  src="/therapist/yehya-hassan-portrait.png"
+                  alt="Yehya Hassan - Psychotherapist & Clinical Hypnotherapist"
+                  className="w-full h-full object-cover object-top group-hover:scale-102 transition-transform duration-300"
+                  loading="lazy"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent p-4 text-white">
+                  <span className="text-sm font-semibold block">
+                    Yehya Hassan
+                  </span>
+                  <span className="text-[11px] text-neutral-300">
+                    Psychotherapist & Clinical Hypnotherapist
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Therapist Bio & Philosophy */}
+            <div className="lg:col-span-8 space-y-5">
+              <div className="space-y-2">
+                <span className="inline-block px-3 py-1 bg-neutral-100 text-neutral-800 rounded-full text-xs font-medium">
+                  Assalamu Alaikum (Peace be upon you)
+                </span>
+                <h3 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950">
+                  I am Yehya Hassan
+                </h3>
+              </div>
+
+              <div className="space-y-3.5 text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
+                <p>
+                  I am a Psychotherapist and Clinical Hypnotherapist with an integrative approach to psychological treatment.
+                </p>
+                <p>
+                  My work focuses on looking beyond symptoms to understand the underlying beliefs, learned patterns, emotional responses, and behaviours that may contribute to psychological difficulties.
+                </p>
+                <div className="p-4 sm:p-5 bg-neutral-50 border-l-2 border-neutral-900 rounded-r text-xs sm:text-sm text-neutral-900 font-medium leading-relaxed italic">
+                  “I believe meaningful therapeutic change begins with understanding what keeps a difficulty going — and working with those patterns through the right therapeutic approach.”
+                </div>
+              </div>
+
+              {/* Consultation Booking Actions */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBookingModalOpen(true)}
+                  className="w-full sm:w-auto bg-black text-white px-6 py-3 rounded text-xs font-semibold uppercase tracking-widest hover:bg-neutral-800 transition-colors shadow-xs"
+                >
+                  Book Consultation with Yehya
+                </button>
+                <a
+                  href="https://wa.me/916005754205"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto border border-neutral-300 hover:border-black text-neutral-900 px-6 py-3 rounded text-xs font-semibold uppercase tracking-widest text-center transition-colors"
+                >
+                  Message on WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 7: WORDS AND MOMENTS (PHOTO GALLERY) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border border-neutral-200 bg-white p-8 sm:p-12 rounded-lg space-y-6">
+          <div className="border-b border-neutral-100 pb-5">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+              Section 7
+            </span>
+            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950 mt-1">
+              Words and Moments
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-600 mt-2 font-sans">
+              A gallery of artwork, letters, and tokens of gratitude created and gifted by clients to therapist
+            </p>
+          </div>
+
+          {/* Photo Gallery Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+            {/* Gallery Photo Item */}
+            <div className="flex flex-col">
+              <div
+                onClick={() => setGalleryModalOpen(true)}
+                className="group relative cursor-pointer rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 shadow-xs hover:shadow-md transition-all duration-300"
+              >
+                <div className="relative aspect-4/5 w-full overflow-hidden bg-neutral-900">
+                  <img
+                    src="/therapist/yehya-hassan-clinic.jpg"
+                    alt="Received on 30 August 2026"
+                    className="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-3 right-3 bg-black/60 text-white p-2 rounded-full opacity-80 group-hover:opacity-100 transition-opacity">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Note and date below the image */}
+              <div className="pt-3.5 space-y-1 text-center sm:text-left">
+                <p className="text-xs sm:text-[13px] text-neutral-700 italic leading-relaxed font-sans">
+                  “Today, I received this beautiful piece of art from my client. It means a lot to me. Thank you, dear.”
+                </p>
+                <span className="text-[11px] font-medium text-neutral-400 block font-mono">
+                  30 August 2026
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* GALLERY PHOTO LIGHTBOX MODAL */}
+      {galleryModalOpen && (
+        <div
+          onClick={() => setGalleryModalOpen(false)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-2xl w-full bg-white rounded-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+          >
+            <button
+              type="button"
+              onClick={() => setGalleryModalOpen(false)}
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-colors"
+              aria-label="Close photo preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="max-h-[80vh] overflow-hidden bg-neutral-950 flex items-center justify-center">
+              <img
+                src="/therapist/yehya-hassan-clinic.jpg"
+                alt="Received on 30 August 2026"
+                className="max-h-[80vh] w-auto object-contain"
+              />
+            </div>
+
+            <div className="p-4 sm:p-5 bg-white border-t border-neutral-200 space-y-1 text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-neutral-700 italic leading-relaxed font-sans">
+                “Today, I received this beautiful piece of art from my client. It means a lot to me. Thank you, dear.”
+              </p>
+              <span className="text-[11px] font-medium text-neutral-400 block font-mono">
+                30 August 2026
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CLINIC APPOINTMENT CTA BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

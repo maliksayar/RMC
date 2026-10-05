@@ -52,9 +52,8 @@ export const ClinicLogo: React.FC<ClinicLogoProps> = ({
 
   return (
     <div
-      className={`inline-flex ${
-        isVertical ? 'flex-col items-center text-center' : `items-center ${current.gap}`
-      } text-current ${className}`}
+      className={`inline-flex ${isVertical ? 'flex-col items-center text-center' : `items-center ${current.gap}`
+        } text-current ${className}`}
     >
       {/* 
         User's Exact Brain Spiral Insignia:

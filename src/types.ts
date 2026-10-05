@@ -24,21 +24,32 @@ export type ClinicService =
   | 'Clinical Hypnotherapy'
   | 'Mental Health & Wellbeing';
 
+export type ResourceKind = 'intervention' | 'educational';
+
 export interface InterventionVideo {
   id: string;
   title: string;
-  typicallyAssignedFor: string;
-  treatmentArea: TreatmentArea;
-  category: 'CBT' | 'Mindfulness & Relaxation' | 'Behavioral' | 'Hypnotherapy';
+  resourceKind?: ResourceKind; // 'intervention' (Category A) or 'educational' (Category B)
+  isRestricted?: boolean; // false = public, true = PIN required
+  typicallyAssignedFor?: string;
+  treatmentArea?: TreatmentArea;
+  category: string;
   duration: string;
   description: string;
-  clinicalRationale: string;
-  tags: string[];
-  type: 'video' | 'audio' | 'interactive';
+  clinicalRationale?: string;
+  tags?: string[];
+  type?: 'video' | 'audio' | 'interactive';
   thumbnailUrl: string;
   videoUrl?: string;
   interactiveType?: 'breathing' | 'grounding' | 'pmr' | 'cbt-record' | 'meditation' | 'sleep-checklist';
-  keySteps: string[];
+  keySteps?: string[];
+  whatItIs?: string;
+  whyUsed?: string;
+  howToPerform?: string;
+  commonMistakes?: string;
+  whatYouMightExperience?: string;
+  questionsDoubts?: string;
+  howAndWhenToPractise?: string;
 }
 
 export interface AccessPin {

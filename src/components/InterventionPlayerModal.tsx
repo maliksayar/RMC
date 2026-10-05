@@ -499,7 +499,7 @@ export const InterventionPlayerModal: React.FC = () => {
                 </p>
 
                 <div className="space-y-3 pt-2">
-                  {activeVideo.keySteps.map((step, idx) => (
+                  {activeVideo.keySteps?.map((step, idx) => (
                     <div
                       key={idx}
                       className="p-3.5 bg-neutral-50 border border-neutral-200 rounded flex items-start gap-3 text-xs"

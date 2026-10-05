@@ -135,14 +135,6 @@ export const BookingModal: React.FC = () => {
                   <span className="font-bold text-neutral-900">{bookedDetails.id}</span>
                 </div>
                 <div className="flex justify-between border-b border-neutral-200 pb-1.5">
-                  <span className="text-neutral-500">Service:</span>
-                  <span className="font-semibold text-neutral-900">{bookedDetails.service}</span>
-                </div>
-                <div className="flex justify-between border-b border-neutral-200 pb-1.5">
-                  <span className="text-neutral-500">Primary Area:</span>
-                  <span className="font-semibold text-neutral-900">{bookedDetails.treatmentArea}</span>
-                </div>
-                <div className="flex justify-between border-b border-neutral-200 pb-1.5">
                   <span className="text-neutral-500">Format:</span>
                   <span className="font-semibold text-neutral-900">
                     {bookedDetails.type === 'offline' ? 'In-Clinic (Tak Mohalla Rd, Bijbehara)' : 'Online Video Consultation'}
@@ -225,47 +217,11 @@ export const BookingModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Service & Treatment Area */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1.5">
-                    2. Clinical Service
-                  </label>
-                  <select
-                    value={service}
-                    onChange={(e) => setService(e.target.value as ClinicService)}
-                    className="w-full text-xs p-2.5 border border-neutral-300 rounded focus:border-black focus:outline-hidden bg-white"
-                  >
-                    <option value="Psychotherapy">Psychotherapy (Talk Therapy)</option>
-                    <option value="Clinical Hypnotherapy">Clinical Hypnotherapy</option>
-                    <option value="Mental Health & Wellbeing">Mental Health & Wellbeing</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1.5">
-                    3. Primary Concern
-                  </label>
-                  <select
-                    value={treatmentArea}
-                    onChange={(e) => setTreatmentArea(e.target.value as TreatmentArea)}
-                    className="w-full text-xs p-2.5 border border-neutral-300 rounded focus:border-black focus:outline-hidden bg-white"
-                  >
-                    <option value="Anxiety">Anxiety & Panic</option>
-                    <option value="Depression">Depression & Low Energy</option>
-                    <option value="OCD">OCD (Obsessions & Compulsions)</option>
-                    <option value="Overthinking">Overthinking & Rumination</option>
-                    <option value="Fear & Phobias">Fear & Phobias</option>
-                    <option value="Sleep Problems">Sleep Problems & Insomnia</option>
-                  </select>
-                </div>
-              </div>
-
               {/* Date & Time Slot */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1.5">
-                    4. Preferred Date
+                    2. Preferred Date
                   </label>
                   <input
                     type="date"
@@ -278,7 +234,7 @@ export const BookingModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1.5">
-                    5. Available Time Slot
+                    3. Available Time Slot
                   </label>
                   <select
                     value={timeSlot}
@@ -297,7 +253,7 @@ export const BookingModal: React.FC = () => {
               {/* Patient Details */}
               <div className="space-y-3 pt-2 border-t border-neutral-100">
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700">
-                  6. Patient Information
+                  4. Patient Information
                 </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

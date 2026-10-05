@@ -78,7 +78,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Interventions library
   const [interventions, setInterventions] = useState<InterventionVideo[]>(() => {
     const saved = localStorage.getItem('rmc_interventions');
-    return saved ? JSON.parse(saved) : INITIAL_INTERVENTIONS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const hasEducational = parsed.some((v: any) => v.resourceKind === 'educational');
+        if (!hasEducational) {
+          const existingIds = new Set(parsed.map((v: any) => v.id));
+          const additions = INITIAL_INTERVENTIONS.filter((v) => !existingIds.has(v.id));
+          return [...parsed, ...additions];
+        }
+        return parsed;
+      } catch (e) {
+        return INITIAL_INTERVENTIONS;
+      }
+    }
+    return INITIAL_INTERVENTIONS;
   });
 
   // PINs

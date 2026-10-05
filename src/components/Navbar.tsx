@@ -33,9 +33,9 @@ export const Navbar: React.FC = () => {
   // Uniform clinical navigation links
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
     { name: 'Services', path: '/services' },
-    { name: 'Interventions', path: '/interventions' },
-    { name: 'Psychoeducation', path: '/articles' },
+    { name: 'Resources', path: '/resources' },
     { name: 'Contact', path: '/contact' }
   ];
 

@@ -45,7 +45,7 @@ export const LibraryPage: React.FC = () => {
     const matchesArea = areaFilter === 'All' || v.treatmentArea === areaFilter;
     const matchesSearch =
       v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.typicallyAssignedFor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (v.typicallyAssignedFor?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       v.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesArea && matchesSearch;
   });
