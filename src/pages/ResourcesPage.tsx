@@ -37,7 +37,7 @@ export const ResourcesPage: React.FC = () => {
     addIntervention,
     deleteIntervention,
     role,
-    switchRole
+    isAdmin
   } = useApp();
 
   // Active resource filter tab: 'all' | 'interventions' | 'educational'
@@ -199,19 +199,16 @@ export const ResourcesPage: React.FC = () => {
             </div>
 
             {/* Dynamic Admin Video Upload Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (role !== 'psychologist') {
-                  switchRole('psychologist');
-                }
-                setShowUploadModal(true);
-              }}
-              className="border border-neutral-300 hover:border-black bg-white hover:bg-neutral-50 text-neutral-900 py-2.5 px-4 rounded text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5 text-neutral-900" />
-              <span>Admin: Add Video</span>
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setShowUploadModal(true)}
+                className="border border-neutral-300 hover:border-black bg-white hover:bg-neutral-50 text-neutral-900 py-2.5 px-4 rounded text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5 text-neutral-900" />
+                <span>Upload Clinical Video</span>
+              </button>
+            )}
           </div>
         </div>
 

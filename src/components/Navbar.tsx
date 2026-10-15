@@ -24,7 +24,6 @@ export const Navbar: React.FC = () => {
   const {
     role,
     isAdmin,
-    switchRole,
     currentUser,
     notifications,
     markNotificationAsRead,
@@ -124,8 +123,8 @@ export const Navbar: React.FC = () => {
                 );
               })}
 
-              {/* Patient Portal Link (Visible to BOTH Patients and Admins) */}
-              {currentUser && (
+              {/* Strictly Role-Based Portal Links */}
+              {currentUser && !isAdmin && (
                 <Link
                   to="/patient-portal"
                   className={`text-[13px] font-medium transition-colors py-2 relative whitespace-nowrap ${
@@ -138,8 +137,7 @@ export const Navbar: React.FC = () => {
                 </Link>
               )}
 
-              {/* Admin Panel (Only for Doctor / Admin) */}
-              {isAdmin && (
+              {currentUser && isAdmin && (
                 <Link
                   to="/admin"
                   className={`text-[12px] font-bold px-3 py-1.5 rounded-md border transition-all flex items-center gap-1.5 whitespace-nowrap ${
@@ -267,24 +265,14 @@ export const Navbar: React.FC = () => {
                       </div>
 
                       {isAdmin ? (
-                        <>
-                          <Link
-                            to="/admin"
-                            onClick={() => setUserDropdownOpen(false)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
-                          >
-                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                            <span>Admin Control Panel</span>
-                          </Link>
-                          <Link
-                            to="/patient-portal"
-                            onClick={() => setUserDropdownOpen(false)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
-                          >
-                            <UserIcon className="w-4 h-4" />
-                            <span>View Patient Portal</span>
-                          </Link>
-                        </>
+                        <Link
+                          to="/admin"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                        >
+                          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                          <span>Admin Control Panel</span>
+                        </Link>
                       ) : (
                         <Link
                           to="/patient-portal"
@@ -295,24 +283,6 @@ export const Navbar: React.FC = () => {
                           <span>My Patient Portal</span>
                         </Link>
                       )}
-
-                      {/* Direct Role Switcher in Dropdown */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchRole(isAdmin ? 'patient' : 'admin');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors border border-dashed border-neutral-200 my-1"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                          <span>{isAdmin ? 'Switch to Patient' : 'Switch to Doctor / Admin'}</span>
-                        </span>
-                        <span className="text-[9px] font-mono uppercase bg-neutral-100 px-1.5 py-0.5 rounded font-bold">
-                          {isAdmin ? 'Doctor' : 'Patient'}
-                        </span>
-                      </button>
 
                       <button
                         type="button"
@@ -435,7 +405,7 @@ export const Navbar: React.FC = () => {
                 </Link>
               )}
 
-              {currentUser && (
+              {currentUser && !isAdmin && (
                 <Link
                   to="/patient-portal"
                   onClick={() => setMobileMenuOpen(false)}

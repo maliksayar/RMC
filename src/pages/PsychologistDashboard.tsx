@@ -25,7 +25,6 @@ import { Appointment, AccessPin, InterventionVideo, BlogArticle } from '../types
 export const PsychologistDashboard: React.FC = () => {
   const {
     role,
-    switchRole,
     appointments,
     updateAppointmentStatus,
     pins,
@@ -176,15 +175,11 @@ export const PsychologistDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-neutral-400">Current Role:</span>
-          <button
-            type="button"
-            onClick={() => switchRole('patient')}
-            className="text-xs bg-white text-black px-3.5 py-1.5 rounded font-semibold hover:bg-neutral-200 transition-colors"
-          >
-            Switch to Patient View
-          </button>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Active Doctor Session
+          </span>
         </div>
       </div>
 

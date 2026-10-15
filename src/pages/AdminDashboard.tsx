@@ -406,15 +406,6 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Quick Top Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <Link
-            to="/patient-portal"
-            className="px-3.5 py-2 bg-emerald-950/90 border border-emerald-700 text-emerald-300 text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-emerald-900 transition-colors flex items-center gap-1.5 shadow-xs"
-            title="Preview Patient Portal and self-regulation exercises"
-          >
-            <Eye className="w-3.5 h-3.5 text-emerald-400" />
-            <span>View Patient Side</span>
-          </Link>
-
           <button
             type="button"
             onClick={() => {
@@ -1462,13 +1453,6 @@ export const AdminDashboard: React.FC = () => {
                 Update clinical credentials, consultation helpline, and Bijbehara clinic timings.
               </p>
             </div>
-            <Link
-              to="/patient-portal"
-              className="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <Eye className="w-3.5 h-3.5 text-neutral-600" />
-              <span>Preview Patient View</span>
-            </Link>
           </div>
 
           {docProfileSaved && (

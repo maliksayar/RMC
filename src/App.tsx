@@ -68,7 +68,7 @@ export const AppContent: React.FC = () => {
           <Route
             path="/patient-portal"
             element={
-              <ProtectedRoute allowedRoles={['patient', 'admin', 'psychologist']}>
+              <ProtectedRoute allowedRoles={['patient']}>
                 <PatientPortal />
               </ProtectedRoute>
             }
@@ -76,7 +76,7 @@ export const AppContent: React.FC = () => {
           <Route
             path="/patient-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['patient', 'admin', 'psychologist']}>
+              <ProtectedRoute allowedRoles={['patient']}>
                 <PatientPortal />
               </ProtectedRoute>
             }

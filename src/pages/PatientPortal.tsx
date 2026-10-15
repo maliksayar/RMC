@@ -253,14 +253,8 @@ export const PatientPortal: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span
-                  className={`text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full font-bold ${
-                    isAdmin
-                      ? 'bg-neutral-900 text-white'
-                      : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                  }`}
-                >
-                  {isAdmin ? 'Doctor View (Patient Portal Preview)' : 'Verified Patient Profile'}
+                <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+                  Verified Patient Profile
                 </span>
                 <span className="text-[11px] font-mono text-neutral-400">
                   ID: {currentUser?.id?.slice(0, 10) || 'PAT-101'}
@@ -277,34 +271,22 @@ export const PatientPortal: React.FC = () => {
 
           {/* Quick Action Badges */}
           <div className="flex flex-wrap items-center gap-3">
-            {isAdmin ? (
-              <Link
-                to="/admin"
-                className="bg-neutral-950 text-white px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 flex items-center gap-2 shadow-xs transition-all"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Open Doctor / Admin Portal</span>
-              </Link>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setBookingModalOpen(true)}
-                  className="bg-neutral-950 text-white px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 flex items-center gap-2 shadow-xs transition-all"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Book Appointment</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPinModalOpen(true)}
-                  className="border border-neutral-300 hover:border-black text-neutral-900 px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-colors"
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  <span>Redeem Doctor PIN</span>
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => setBookingModalOpen(true)}
+              className="bg-neutral-950 text-white px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 flex items-center gap-2 shadow-xs transition-all"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Book Appointment</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPinModalOpen(true)}
+              className="border border-neutral-300 hover:border-black text-neutral-900 px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-colors"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Redeem Doctor PIN</span>
+            </button>
           </div>
         </div>
 
