@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   Users,
@@ -34,7 +35,8 @@ import {
   Loader2,
   Cloud,
   UploadCloud,
-  X
+  X,
+  User as UserIcon
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Appointment, AccessPin, InterventionVideo, BlogArticle, ClinicService, TreatmentArea } from '../types';
@@ -60,10 +62,38 @@ export const AdminDashboard: React.FC = () => {
     notifications,
     broadcastNotification,
     isSupabaseLive,
-    setActiveVideo
+    setActiveVideo,
+    updateUserProfile
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'pins' | 'videos' | 'articles' | 'broadcast'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'pins' | 'videos' | 'articles' | 'broadcast' | 'profile'>('overview');
+
+  // Doctor & Clinic Profile State
+  const [docName, setDocName] = useState(currentUser?.name || 'Dr. Malik Sayar');
+  const [docPhone, setDocPhone] = useState(currentUser?.phone || '+91 6005754205');
+  const [docEmail, setDocEmail] = useState(currentUser?.email || 'doctor@realitymindclinic.com');
+  const [clinicAddress, setClinicAddress] = useState('Tak Mohalla Road, Bijbehara, Anantnag, J&K — 192124');
+  const [clinicHours, setClinicHours] = useState('Mon - Sat: 10:00 AM - 6:00 PM');
+  const [docProfileSaved, setDocProfileSaved] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      setDocName(currentUser.name || 'Dr. Malik Sayar');
+      setDocPhone(currentUser.phone || '+91 6005754205');
+      setDocEmail(currentUser.email || 'doctor@realitymindclinic.com');
+    }
+  }, [currentUser]);
+
+  const handleSaveDocProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateUserProfile({
+      name: docName.trim(),
+      phone: docPhone.trim(),
+      email: docEmail.trim()
+    });
+    setDocProfileSaved(true);
+    setTimeout(() => setDocProfileSaved(false), 3000);
+  };
 
   // Search & Filter States
   const [aptFilter, setAptFilter] = useState<'all' | 'confirmed' | 'pending' | 'completed' | 'cancelled'>('all');
@@ -376,6 +406,15 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Quick Top Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/patient-portal"
+            className="px-3.5 py-2 bg-emerald-950/90 border border-emerald-700 text-emerald-300 text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-emerald-900 transition-colors flex items-center gap-1.5 shadow-xs"
+            title="Preview Patient Portal and self-regulation exercises"
+          >
+            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+            <span>View Patient Side</span>
+          </Link>
+
           <button
             type="button"
             onClick={() => {
@@ -407,7 +446,8 @@ export const AdminDashboard: React.FC = () => {
           { id: 'pins', label: 'Prescription PINs', icon: KeyRound, count: pins.length },
           { id: 'videos', label: 'Interventions Library', icon: Video, count: interventions.length },
           { id: 'articles', label: 'Articles & Guides', icon: FileText, count: articles.length },
-          { id: 'broadcast', label: 'Notification Center', icon: Bell, count: notifications.length }
+          { id: 'broadcast', label: 'Notification Center', icon: Bell, count: notifications.length },
+          { id: 'profile', label: 'Doctor Profile', icon: UserIcon, count: null }
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -1402,6 +1442,128 @@ export const AdminDashboard: React.FC = () => {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 7: DOCTOR & CLINIC PRACTICE PROFILE */}
+      {/* ========================================================================= */}
+      {activeTab === 'profile' && (
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="border-b border-neutral-100 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded font-bold">
+                Doctor Administration
+              </span>
+              <h2 className="font-serif text-2xl font-bold text-neutral-950 mt-1">
+                Doctor Profile & Practice Information
+              </h2>
+              <p className="text-xs text-neutral-500">
+                Update clinical credentials, consultation helpline, and Bijbehara clinic timings.
+              </p>
+            </div>
+            <Link
+              to="/patient-portal"
+              className="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <Eye className="w-3.5 h-3.5 text-neutral-600" />
+              <span>Preview Patient View</span>
+            </Link>
+          </div>
+
+          {docProfileSaved && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Doctor and clinic profile updated successfully!</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveDocProfile} className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1.5">
+                  Doctor / Consultant Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={docName}
+                  onChange={(e) => setDocName(e.target.value)}
+                  className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1.5">
+                  Direct Phone (WhatsApp Enabled) *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={docPhone}
+                  onChange={(e) => setDocPhone(e.target.value)}
+                  className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1.5">
+                  Official Consultation Email *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={docEmail}
+                  onChange={(e) => setDocEmail(e.target.value)}
+                  className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1.5">
+                  Practice Timings
+                </label>
+                <input
+                  type="text"
+                  value={clinicHours}
+                  onChange={(e) => setClinicHours(e.target.value)}
+                  className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1.5">
+                Physical Clinic Address
+              </label>
+              <input
+                type="text"
+                value={clinicAddress}
+                onChange={(e) => setClinicAddress(e.target.value)}
+                className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
+              />
+            </div>
+
+            <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-600 space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span>Admin Authority:</span>
+                <span className="font-bold text-neutral-900">Dr. Malik Sayar (Full Administrative Rights)</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span>Portal Permissions:</span>
+                <span className="text-emerald-700 font-semibold">✓ Appointments, Videos, PINs, Articles & Patient View</span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 transition-all shadow-xs"
+            >
+              Save Doctor & Practice Profile
+            </button>
+          </form>
         </div>
       )}
 

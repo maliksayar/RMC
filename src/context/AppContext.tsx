@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   User,
   UserRole,
+  isUserAdmin,
   InterventionVideo,
   AccessPin,
   Appointment,
@@ -25,6 +26,7 @@ interface AppContextType {
   isAdmin: boolean;
   isSupabaseLive: boolean;
   switchRole: (role: UserRole) => void;
+  updateUserProfile: (updates: Partial<User>) => Promise<boolean>;
   loginAs: (user: User) => void;
   loginWithSupabase: (email: string, password: string) => Promise<{ success: boolean; message?: string; role?: UserRole }>;
   signUpWithSupabase: (data: SignUpData) => Promise<{ success: boolean; message?: string; role?: UserRole; autoLoggedIn?: boolean }>;
@@ -84,8 +86,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : DEMO_USERS[0]; // defaults to Patient Aamir Mir
   });
 
-  const role: UserRole = currentUser?.role || 'patient';
-  const isAdmin = role === 'admin' || role === 'psychologist';
+  const isAdmin = isUserAdmin(currentUser);
+  const role: UserRole = isAdmin ? 'admin' : (currentUser?.role || 'patient');
   const isSupabaseLive = isSupabaseConfigured;
 
   // Interventions library
@@ -310,25 +312,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const switchRole = (newRole: UserRole) => {
-    if (newRole === 'admin' || newRole === 'psychologist') {
-      setCurrentUser({
-        ...DEMO_USERS[1],
-        role: 'admin'
-      });
-      setUnlockedVideoIds(interventions.map((v) => v.id));
+    if (currentUser) {
+      const updated: User = {
+        ...currentUser,
+        role: newRole
+      };
+      setCurrentUser(updated);
+      localStorage.setItem('rmc_current_user', JSON.stringify(updated));
+      if (newRole === 'admin' || newRole === 'psychologist') {
+        setUnlockedVideoIds(interventions.map((v) => v.id));
+      }
     } else {
-      setCurrentUser(DEMO_USERS[0]);
-      if (activeUnlockedPin) {
-        setUnlockedVideoIds(activeUnlockedPin.assignedVideoIds);
+      if (newRole === 'admin' || newRole === 'psychologist') {
+        setCurrentUser(DEMO_USERS[1]);
+        setUnlockedVideoIds(interventions.map((v) => v.id));
       } else {
-        setUnlockedVideoIds([]);
+        setCurrentUser(DEMO_USERS[0]);
       }
     }
   };
 
+  const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
+    if (!currentUser) return false;
+    const updated: User = {
+      ...currentUser,
+      ...updates
+    };
+    setCurrentUser(updated);
+    localStorage.setItem('rmc_current_user', JSON.stringify(updated));
+
+    if (isSupabaseConfigured && currentUser.id) {
+      try {
+        await dbService.updateProfile(currentUser.id, updates);
+      } catch (e) {
+        console.warn('Could not sync profile update to Supabase:', e);
+      }
+    }
+    return true;
+  };
+
   const loginAs = (user: User) => {
     setCurrentUser(user);
-    if (user.role === 'admin' || user.role === 'psychologist') {
+    if (isUserAdmin(user)) {
       setUnlockedVideoIds(interventions.map((v) => v.id));
     } else if (user.unlockedVideoIds && user.unlockedVideoIds.length > 0) {
       setUnlockedVideoIds(user.unlockedVideoIds);
@@ -671,6 +696,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAdmin,
         isSupabaseLive,
         switchRole,
+        updateUserProfile,
         loginAs,
         loginWithSupabase,
         signUpWithSupabase,

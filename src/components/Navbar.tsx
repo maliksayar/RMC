@@ -14,7 +14,8 @@ import {
   UserPlus,
   LogOut,
   ChevronDown,
-  LayoutDashboard
+  LayoutDashboard,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ClinicLogo } from './ClinicLogo';
@@ -123,7 +124,21 @@ export const Navbar: React.FC = () => {
                 );
               })}
 
-              {/* Role-Based Portal Links */}
+              {/* Patient Portal Link (Visible to BOTH Patients and Admins) */}
+              {currentUser && (
+                <Link
+                  to="/patient-portal"
+                  className={`text-[13px] font-medium transition-colors py-2 relative whitespace-nowrap ${
+                    isActive('/patient-portal') || isActive('/patient-dashboard')
+                      ? 'text-neutral-950 font-bold after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-neutral-950'
+                      : 'text-neutral-600 hover:text-neutral-950'
+                  }`}
+                >
+                  Patient Portal
+                </Link>
+              )}
+
+              {/* Admin Panel (Only for Doctor / Admin) */}
               {isAdmin && (
                 <Link
                   to="/admin"
@@ -133,22 +148,8 @@ export const Navbar: React.FC = () => {
                       : 'border-neutral-800 text-neutral-900 bg-neutral-100 hover:bg-neutral-200'
                   }`}
                 >
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Admin Panel</span>
-                </Link>
-              )}
-
-              {/* Patient Portal Link (Only for Patients) */}
-              {currentUser && !isAdmin && (
-                <Link
-                  to="/patient-portal"
-                  className={`text-[13px] font-medium transition-colors py-2 relative whitespace-nowrap ${
-                    isActive('/patient-portal')
-                      ? 'text-neutral-950 font-bold after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-neutral-950'
-                      : 'text-neutral-600 hover:text-neutral-950'
-                  }`}
-                >
-                  Patient Portal
                 </Link>
               )}
             </nav>
@@ -266,14 +267,24 @@ export const Navbar: React.FC = () => {
                       </div>
 
                       {isAdmin ? (
-                        <Link
-                          to="/admin"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
-                        >
-                          <ShieldCheck className="w-4 h-4" />
-                          <span>Admin Control Panel</span>
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            <span>Admin Control Panel</span>
+                          </Link>
+                          <Link
+                            to="/patient-portal"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+                          >
+                            <UserIcon className="w-4 h-4" />
+                            <span>View Patient Portal</span>
+                          </Link>
+                        </>
                       ) : (
                         <Link
                           to="/patient-portal"
@@ -281,9 +292,27 @@ export const Navbar: React.FC = () => {
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
                         >
                           <UserIcon className="w-4 h-4" />
-                          <span>Patient Portal</span>
+                          <span>My Patient Portal</span>
                         </Link>
                       )}
+
+                      {/* Direct Role Switcher in Dropdown */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          switchRole(isAdmin ? 'patient' : 'admin');
+                          setUserDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors border border-dashed border-neutral-200 my-1"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{isAdmin ? 'Switch to Patient' : 'Switch to Doctor / Admin'}</span>
+                        </span>
+                        <span className="text-[9px] font-mono uppercase bg-neutral-100 px-1.5 py-0.5 rounded font-bold">
+                          {isAdmin ? 'Doctor' : 'Patient'}
+                        </span>
+                      </button>
 
                       <button
                         type="button"
@@ -406,7 +435,7 @@ export const Navbar: React.FC = () => {
                 </Link>
               )}
 
-              {currentUser && !isAdmin && (
+              {currentUser && (
                 <Link
                   to="/patient-portal"
                   onClick={() => setMobileMenuOpen(false)}

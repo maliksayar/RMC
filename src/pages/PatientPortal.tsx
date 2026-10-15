@@ -52,13 +52,50 @@ export const PatientPortal: React.FC = () => {
     unlockedVideoIds,
     interventions,
     appointments,
+    articles,
     setActiveVideo,
+    setActiveArticle,
     setPinModalOpen,
     setBookingModalOpen,
-    verifyAndUnlockPin
+    verifyAndUnlockPin,
+    updateUserProfile
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'prescriptions' | 'tools' | 'appointments' | 'cbt-log' | 'doctor'>('prescriptions');
+  const [activeTab, setActiveTab] = useState<'prescriptions' | 'tools' | 'appointments' | 'cbt-log' | 'articles' | 'profile' | 'doctor'>('prescriptions');
+
+  // Patient Profile Edit State
+  const [editName, setEditName] = useState(currentUser?.name || '');
+  const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
+  const [editEmail, setEditEmail] = useState(currentUser?.email || '');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccessMsg, setProfileSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      setEditName(currentUser.name || '');
+      setEditPhone(currentUser.phone || '');
+      setEditEmail(currentUser.email || '');
+    }
+  }, [currentUser]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileSuccessMsg(null);
+    try {
+      await updateUserProfile({
+        name: editName.trim(),
+        phone: editPhone.trim(),
+        email: editEmail.trim()
+      });
+      setProfileSuccessMsg('Profile information updated successfully!');
+      setTimeout(() => setProfileSuccessMsg(null), 3500);
+    } catch {
+      // ignore
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // Inline PIN Unlock State
   const [pinInput, setPinInput] = useState('');
@@ -377,6 +414,32 @@ export const PatientPortal: React.FC = () => {
         >
           <Calendar className="w-3.5 h-3.5" />
           <span>My Consultations ({myAppointments.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('articles')}
+          className={`pb-3 pt-1 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 whitespace-nowrap transition-all ${
+            activeTab === 'articles'
+              ? 'border-neutral-950 text-neutral-950'
+              : 'border-transparent text-neutral-500 hover:text-neutral-900'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>Blogs & Clinical Guides ({articles.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('profile')}
+          className={`pb-3 pt-1 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 whitespace-nowrap transition-all ${
+            activeTab === 'profile'
+              ? 'border-neutral-950 text-neutral-950'
+              : 'border-transparent text-neutral-500 hover:text-neutral-900'
+          }`}
+        >
+          <UserIcon className="w-3.5 h-3.5" />
+          <span>Edit My Profile & Info</span>
         </button>
 
         <button
@@ -1107,6 +1170,166 @@ export const PatientPortal: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+      {/* TAB 6: BLOG ARTICLES & PSYCHOEDUCATION GUIDES */}
+      {activeTab === 'articles' && (
+        <div className="space-y-6">
+          <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded font-bold">
+                Psychoeducation & Evidence-Based Insights
+              </span>
+              <h3 className="font-serif text-2xl font-bold text-neutral-950 mt-1">
+                Clinical Articles & Guides ({articles.length})
+              </h3>
+              <p className="text-xs text-neutral-500">
+                Authoritative mental health guides written by Dr. Malik Sayar to support your therapeutic journey.
+              </p>
+            </div>
+            <Link
+              to="/articles"
+              className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <span>Open Full Blog</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {articles.map((article) => (
+              <div
+                key={article.id}
+                className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="relative aspect-video bg-neutral-900 overflow-hidden">
+                    <img
+                      src={article.coverImage}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <span className="absolute top-2.5 left-2.5 bg-neutral-950/80 text-white text-[10px] font-mono px-2 py-0.5 rounded uppercase">
+                      {article.category}
+                    </span>
+                    <span className="absolute bottom-2.5 right-2.5 text-[10px] font-mono text-white bg-black/70 px-2 py-0.5 rounded">
+                      {article.readTime}
+                    </span>
+                  </div>
+
+                  <div className="p-5 space-y-2">
+                    <span className="text-[10px] font-mono text-neutral-400 block">
+                      By {article.author} · {article.publishedDate}
+                    </span>
+                    <h4 className="font-serif text-lg font-bold text-neutral-950 line-clamp-2 group-hover:text-neutral-700 transition-colors">
+                      {article.title}
+                    </h4>
+                    <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
+                      {article.summary}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 pt-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveArticle(article)}
+                    className="w-full py-2.5 border border-neutral-300 hover:border-black text-neutral-900 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Read Complete Article</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 7: PATIENT PROFILE & INFO MANAGEMENT */}
+      {activeTab === 'profile' && (
+        <div className="max-w-2xl mx-auto bg-white border border-neutral-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="border-b border-neutral-100 pb-4">
+            <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded font-bold">
+              Account Management
+            </span>
+            <h3 className="font-serif text-2xl font-bold text-neutral-950 mt-1">
+              My Clinical Profile & Details
+            </h3>
+            <p className="text-xs text-neutral-500">
+              Update your name, contact phone, and consultation email. These details appear on your appointments and prescriptions.
+            </p>
+          </div>
+
+          {profileSuccessMsg && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{profileSuccessMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1.5">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1.5">
+                Phone Number (WhatsApp for Slot Confirmation) *
+              </label>
+              <input
+                type="tel"
+                required
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+91 6005754205"
+                className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1.5">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                required
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="your.email@example.com"
+                className="w-full p-2.5 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
+              />
+            </div>
+
+            <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1 text-neutral-600">
+              <div className="flex items-center justify-between text-[11px]">
+                <span>Patient Account ID:</span>
+                <span className="font-mono text-neutral-900 font-bold">{currentUser?.id || 'PAT-LOCAL'}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span>Account Role:</span>
+                <span className="font-bold text-neutral-900 capitalize">{currentUser?.role || 'patient'}</span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={profileSaving}
+              className="w-full py-3 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 transition-all shadow-xs disabled:opacity-50"
+            >
+              {profileSaving ? 'Saving Updates...' : 'Save Profile Changes'}
+            </button>
+          </form>
         </div>
       )}
     </div>

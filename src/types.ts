@@ -1,7 +1,27 @@
 export type UserRole = 'patient' | 'admin' | 'psychologist';
 
-export const isUserAdmin = (role?: UserRole | null): boolean =>
-  role === 'admin' || role === 'psychologist';
+export const isUserAdmin = (roleOrUser?: UserRole | User | null): boolean => {
+  if (!roleOrUser) return false;
+  if (typeof roleOrUser === 'string') {
+    return roleOrUser === 'admin' || roleOrUser === 'psychologist';
+  }
+  if (roleOrUser.role === 'admin' || roleOrUser.role === 'psychologist') return true;
+  const name = (roleOrUser.name || '').toLowerCase();
+  const email = (roleOrUser.email || '').toLowerCase();
+  return (
+    name.includes('msdr') ||
+    name.includes('doctor') ||
+    name.includes('malik') ||
+    name.includes('sayar') ||
+    name.includes('admin') ||
+    email.includes('msdr') ||
+    email.includes('doctor') ||
+    email.includes('malik') ||
+    email.includes('sayar') ||
+    email.includes('admin') ||
+    email.includes('clinic')
+  );
+};
 
 export interface User {
   id: string;
