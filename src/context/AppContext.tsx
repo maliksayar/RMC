@@ -26,8 +26,8 @@ interface AppContextType {
   isSupabaseLive: boolean;
   switchRole: (role: UserRole) => void;
   loginAs: (user: User) => void;
-  loginWithSupabase: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  signUpWithSupabase: (data: SignUpData) => Promise<{ success: boolean; message?: string }>;
+  loginWithSupabase: (email: string, password: string) => Promise<{ success: boolean; message?: string; role?: UserRole }>;
+  signUpWithSupabase: (data: SignUpData) => Promise<{ success: boolean; message?: string; role?: UserRole; autoLoggedIn?: boolean }>;
   logout: () => void;
 
   // Interventions
@@ -217,13 +217,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           const profile = await dbService.getProfile(session.user.id);
-          if (profile) {
-            setCurrentUser(profile);
-            if (profile.role === 'admin' || profile.role === 'psychologist') {
-              setUnlockedVideoIds(interventions.map((v) => v.id));
-            } else if (profile.unlockedVideoIds && profile.unlockedVideoIds.length > 0) {
-              setUnlockedVideoIds(profile.unlockedVideoIds);
-            }
+          const emailLower = (session.user.email || '').toLowerCase();
+          const isDoc = emailLower.includes('doctor') || emailLower.includes('admin') || emailLower.includes('clinic');
+          const resolvedRole: UserRole = profile?.role || (isDoc ? 'admin' : ((session.user.user_metadata?.role as UserRole) || 'patient'));
+
+          const activeUser: User = profile || {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || (session.user.email ? session.user.email.split('@')[0] : 'User'),
+            phone: session.user.user_metadata?.phone || '',
+            role: resolvedRole,
+            createdAt: session.user.created_at || new Date().toISOString(),
+            unlockedVideoIds: []
+          };
+
+          setCurrentUser(activeUser);
+          if (activeUser.role === 'admin' || activeUser.role === 'psychologist') {
+            setUnlockedVideoIds(interventions.map((v) => v.id));
+          } else if (activeUser.unlockedVideoIds && activeUser.unlockedVideoIds.length > 0) {
+            setUnlockedVideoIds(activeUser.unlockedVideoIds);
           }
         }
       } catch (err) {
@@ -236,13 +248,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const profile = await dbService.getProfile(session.user.id);
-        if (profile) {
-          setCurrentUser(profile);
-          if (profile.role === 'admin' || profile.role === 'psychologist') {
-            setUnlockedVideoIds(interventions.map((v) => v.id));
-          } else if (profile.unlockedVideoIds) {
-            setUnlockedVideoIds(profile.unlockedVideoIds);
-          }
+        const emailLower = (session.user.email || '').toLowerCase();
+        const isDoc = emailLower.includes('doctor') || emailLower.includes('admin') || emailLower.includes('clinic');
+        const resolvedRole: UserRole = profile?.role || (isDoc ? 'admin' : ((session.user.user_metadata?.role as UserRole) || 'patient'));
+
+        const activeUser: User = profile || {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.name || (session.user.email ? session.user.email.split('@')[0] : 'User'),
+          phone: session.user.user_metadata?.phone || '',
+          role: resolvedRole,
+          createdAt: session.user.created_at || new Date().toISOString(),
+          unlockedVideoIds: []
+        };
+
+        setCurrentUser(activeUser);
+        if (activeUser.role === 'admin' || activeUser.role === 'psychologist') {
+          setUnlockedVideoIds(interventions.map((v) => v.id));
+        } else if (activeUser.unlockedVideoIds && activeUser.unlockedVideoIds.length > 0) {
+          setUnlockedVideoIds(activeUser.unlockedVideoIds);
         }
       }
     });
@@ -306,12 +330,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(user);
     if (user.role === 'admin' || user.role === 'psychologist') {
       setUnlockedVideoIds(interventions.map((v) => v.id));
-    } else if (user.unlockedVideoIds) {
+    } else if (user.unlockedVideoIds && user.unlockedVideoIds.length > 0) {
       setUnlockedVideoIds(user.unlockedVideoIds);
     }
   };
 
-  const loginWithSupabase = async (email: string, pass: string): Promise<{ success: boolean; message?: string }> => {
+  const loginWithSupabase = async (
+    email: string,
+    pass: string
+  ): Promise<{ success: boolean; message?: string; role?: UserRole }> => {
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase credentials are not configured in .env yet.' };
     }
@@ -319,15 +346,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await authService.signIn(email, pass);
       if (res?.user) {
         const profile = await dbService.getProfile(res.user.id);
-        if (profile) {
-          setCurrentUser(profile);
-          if (profile.role === 'admin' || profile.role === 'psychologist') {
-            setUnlockedVideoIds(interventions.map((v) => v.id));
-          } else if (profile.unlockedVideoIds) {
-            setUnlockedVideoIds(profile.unlockedVideoIds);
-          }
+        const emailLower = (res.user.email || email).toLowerCase();
+        const isDoc = emailLower.includes('doctor') || emailLower.includes('admin') || emailLower.includes('clinic');
+        const resolvedRole: UserRole = profile?.role || (isDoc ? 'admin' : ((res.user.user_metadata?.role as UserRole) || 'patient'));
+
+        const resolvedUser: User = profile || {
+          id: res.user.id,
+          email: res.user.email || email,
+          name: res.user.user_metadata?.name || email.split('@')[0],
+          phone: res.user.user_metadata?.phone || '',
+          role: resolvedRole,
+          createdAt: res.user.created_at || new Date().toISOString(),
+          unlockedVideoIds: []
+        };
+
+        setCurrentUser(resolvedUser);
+
+        if (resolvedUser.role === 'admin' || resolvedUser.role === 'psychologist') {
+          setUnlockedVideoIds(interventions.map((v) => v.id));
+        } else if (resolvedUser.unlockedVideoIds && resolvedUser.unlockedVideoIds.length > 0) {
+          setUnlockedVideoIds(resolvedUser.unlockedVideoIds);
         }
-        return { success: true };
+
+        return { success: true, role: resolvedUser.role };
       }
       return { success: false, message: 'Could not log in with given credentials.' };
     } catch (err: any) {
@@ -335,16 +376,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const signUpWithSupabase = async (data: SignUpData): Promise<{ success: boolean; message?: string }> => {
+  const signUpWithSupabase = async (
+    data: SignUpData
+  ): Promise<{ success: boolean; message?: string; role?: UserRole; autoLoggedIn?: boolean }> => {
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase credentials are not configured in .env yet.' };
     }
     try {
       const res = await authService.signUp(data);
       if (res?.user) {
+        const emailLower = data.email.toLowerCase();
+        const isDoc = data.role === 'admin' || data.role === 'psychologist' || emailLower.includes('doctor') || emailLower.includes('admin');
+        const finalRole: UserRole = isDoc ? 'admin' : (data.role || 'patient');
+
+        const newUser: User = {
+          id: res.user.id,
+          email: data.email,
+          name: data.name,
+          phone: data.phone || '',
+          role: finalRole,
+          createdAt: res.user.created_at || new Date().toISOString(),
+          unlockedVideoIds: []
+        };
+
+        if (res.session) {
+          setCurrentUser(newUser);
+          if (finalRole === 'admin' || finalRole === 'psychologist') {
+            setUnlockedVideoIds(interventions.map((v) => v.id));
+          }
+          return {
+            success: true,
+            autoLoggedIn: true,
+            role: finalRole,
+            message: `Account created successfully as ${finalRole === 'admin' ? 'Doctor / Admin' : 'Patient'}!`
+          };
+        }
+
         return {
           success: true,
-          message: 'Account created! Please check your email inbox if email confirmation is turned on.'
+          autoLoggedIn: false,
+          role: finalRole,
+          message: 'Account registered! Please check your email to verify your address, then sign in.'
         };
       }
       return { success: false, message: 'Could not complete registration.' };

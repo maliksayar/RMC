@@ -73,6 +73,14 @@ export const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/patient-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['patient', 'admin', 'psychologist']}>
+                <PatientPortal />
+              </ProtectedRoute>
+            }
+          />
           {/* Catch-all fallback */}
           <Route path="*" element={<HomePage />} />
         </Routes>

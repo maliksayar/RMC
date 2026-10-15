@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   X,
   Lock,
@@ -9,15 +10,19 @@ import {
   CheckCircle2,
   AlertCircle,
   Database,
-  Info,
   LogIn,
-  UserPlus
+  UserPlus,
+  ArrowRight,
+  Stethoscope,
+  HeartHandshake
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { User } from '../types';
+import { User, UserRole } from '../types';
+import { DEMO_USERS } from '../data/initialData';
 
 export const AuthModal: React.FC = () => {
+  const navigate = useNavigate();
   const {
     authModalOpen,
     setAuthModalOpen,
@@ -35,6 +40,7 @@ export const AuthModal: React.FC = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('patient');
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -55,14 +61,21 @@ export const AuthModal: React.FC = () => {
 
     try {
       if (authModalMode === 'signin') {
-        // Sign In (For Doctor or Patient)
+        // Sign In
         if (isSupabaseConfigured) {
           const result = await loginWithSupabase(email.trim(), password);
           if (!result.success) {
-            setErrorMsg(result.message || 'Failed to sign in. Please check your email and password.');
+            setErrorMsg(result.message || 'Failed to sign in. Please verify your credentials.');
           } else {
-            setSuccessMsg('Signed in successfully!');
-            setTimeout(() => setAuthModalOpen(false), 800);
+            const role = result.role;
+            const isDoctor = role === 'admin' || role === 'psychologist';
+            setSuccessMsg(
+              `Signed in successfully! Redirecting to ${isDoctor ? 'Admin Dashboard' : 'Patient Portal'}...`
+            );
+            setTimeout(() => {
+              setAuthModalOpen(false);
+              navigate(isDoctor ? '/admin' : '/patient-portal');
+            }, 600);
           }
         } else {
           // Local offline fallback login
@@ -82,7 +95,11 @@ export const AuthModal: React.FC = () => {
               role: 'admin',
               createdAt: '2026-01-01'
             });
-            setSuccessMsg('Signed in as Clinic Doctor (Admin Panel Unlocked)');
+            setSuccessMsg('Signed in as Doctor / Admin! Opening Admin Dashboard...');
+            setTimeout(() => {
+              setAuthModalOpen(false);
+              navigate('/admin');
+            }, 600);
           } else {
             loginAs({
               id: `pat-${Date.now()}`,
@@ -92,12 +109,15 @@ export const AuthModal: React.FC = () => {
               role: 'patient',
               createdAt: new Date().toISOString()
             });
-            setSuccessMsg('Signed in as Patient (Patient Portal Active)');
+            setSuccessMsg('Signed in as Patient! Opening Patient Portal...');
+            setTimeout(() => {
+              setAuthModalOpen(false);
+              navigate('/patient-portal');
+            }, 600);
           }
-          setTimeout(() => setAuthModalOpen(false), 800);
         }
       } else {
-        // Registration (Strictly for Patients only)
+        // Registration
         if (!name.trim()) {
           setErrorMsg('Please enter your full name.');
           setLoading(false);
@@ -110,30 +130,45 @@ export const AuthModal: React.FC = () => {
             password,
             name: name.trim(),
             phone: phone.trim(),
-            role: 'patient' // Always patient
+            role: selectedRole
           });
 
           if (!result.success) {
-            setErrorMsg(result.message || 'Failed to create patient account.');
+            setErrorMsg(result.message || 'Failed to register account.');
           } else {
-            setSuccessMsg(
-              result.message || 'Patient account created! Check your email if verification is required.'
-            );
-            setTimeout(() => setAuthModalOpen(false), 1200);
+            if (result.autoLoggedIn) {
+              const isDoctor = result.role === 'admin' || result.role === 'psychologist';
+              setSuccessMsg(`Welcome, ${name}! Redirecting to your dashboard...`);
+              setTimeout(() => {
+                setAuthModalOpen(false);
+                navigate(isDoctor ? '/admin' : '/patient-portal');
+              }, 700);
+            } else {
+              setSuccessMsg(
+                result.message || 'Account registered! Please sign in with your credentials.'
+              );
+              setTimeout(() => {
+                setAuthModalMode('signin');
+              }, 1200);
+            }
           }
         } else {
           // Local offline fallback registration
-          const newPatient: User = {
-            id: `pat-${Date.now()}`,
+          const isDoc = selectedRole === 'admin' || selectedRole === 'psychologist';
+          const newUser: User = {
+            id: isDoc ? 'doctor-lead' : `pat-${Date.now()}`,
             name: name.trim(),
             email: email.trim(),
             phone: phone.trim() || '+91 6005754205',
-            role: 'patient',
+            role: selectedRole,
             createdAt: new Date().toISOString()
           };
-          loginAs(newPatient);
-          setSuccessMsg(`Welcome, ${newPatient.name}! Patient account registered.`);
-          setTimeout(() => setAuthModalOpen(false), 900);
+          loginAs(newUser);
+          setSuccessMsg(`Welcome, ${newUser.name}! Redirecting to ${isDoc ? 'Admin Dashboard' : 'Patient Portal'}...`);
+          setTimeout(() => {
+            setAuthModalOpen(false);
+            navigate(isDoc ? '/admin' : '/patient-portal');
+          }, 700);
         }
       }
     } catch (err: any) {
@@ -145,28 +180,20 @@ export const AuthModal: React.FC = () => {
 
   const handleQuickLogin = (target: 'doctor' | 'patient') => {
     if (target === 'doctor') {
-      loginAs({
-        id: 'doctor-lead',
-        name: 'Dr. Malik Sayar (Doctor Admin)',
-        email: 'doctor@realitymindclinic.com',
-        phone: '+91 6005754205',
-        role: 'admin',
-        createdAt: '2026-01-01'
-      });
-      setSuccessMsg('Logged in as Doctor / Admin');
+      loginAs(DEMO_USERS[1]);
+      setSuccessMsg('Logged in as Dr. Malik Sayar (Admin)! Opening Admin Dashboard...');
+      setTimeout(() => {
+        setAuthModalOpen(false);
+        navigate('/admin');
+      }, 500);
     } else {
-      loginAs({
-        id: 'patient-demo-1',
-        name: 'Aamir Mir',
-        email: 'aamir.mir@example.com',
-        phone: '6005754205',
-        role: 'patient',
-        createdAt: '2026-09-20',
-        unlockedVideoIds: ['cbt-basics', 'diaphragmatic-breathing', 'grounding-54321', 'thought-defusion-worry']
-      });
-      setSuccessMsg('Logged in as Patient Aamir Mir');
+      loginAs(DEMO_USERS[0]);
+      setSuccessMsg('Logged in as Patient Aamir Mir! Opening Patient Portal...');
+      setTimeout(() => {
+        setAuthModalOpen(false);
+        navigate('/patient-portal');
+      }, 500);
     }
-    setTimeout(() => setAuthModalOpen(false), 600);
   };
 
   return (
@@ -191,10 +218,10 @@ export const AuthModal: React.FC = () => {
             </div>
             <h2 className="text-lg font-serif font-bold text-white mt-1">
               {currentUser
-                ? 'Your Account Details'
+                ? 'Your Account Session'
                 : authModalMode === 'signin'
-                ? 'Sign In to Your Account'
-                : 'Patient Registration'}
+                ? 'Sign In to Clinical Portal'
+                : 'Create New Account'}
             </h2>
           </div>
           <button
@@ -234,12 +261,25 @@ export const AuthModal: React.FC = () => {
 
                 <div className="pt-2 border-t border-neutral-200 text-[11px] text-neutral-500">
                   {isAdmin
-                    ? '✓ Full clinical administrator privileges enabled (Appointments, Prescriptions, Videos & Articles).'
+                    ? '✓ Full clinical administrator privileges enabled (Appointments, PINs, Videos & Articles).'
                     : '✓ Patient privileges enabled (Personal Portal, Prescriptions & Guided Interventions).'}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              {/* Direct Link to their specific Dashboard */}
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalOpen(false);
+                  navigate(isAdmin ? '/admin' : '/patient-portal');
+                }}
+                className="w-full py-3 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 flex items-center justify-center gap-2 shadow-xs transition-all"
+              >
+                <span>Go to {isAdmin ? 'Doctor / Admin Dashboard' : 'Patient Dashboard'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -253,7 +293,7 @@ export const AuthModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setAuthModalOpen(false)}
-                  className="py-2.5 px-4 bg-neutral-950 text-white hover:bg-neutral-800 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all"
+                  className="py-2.5 px-4 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all"
                 >
                   Close
                 </button>
@@ -277,7 +317,7 @@ export const AuthModal: React.FC = () => {
                   }`}
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Login (Doctor / Patient)</span>
+                  <span>Log In</span>
                 </button>
                 <button
                   type="button"
@@ -293,7 +333,7 @@ export const AuthModal: React.FC = () => {
                   }`}
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>Register Patient</span>
+                  <span>Register Account</span>
                 </button>
               </div>
 
@@ -314,13 +354,50 @@ export const AuthModal: React.FC = () => {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-3.5">
-                {authModalMode === 'signup' ? (
-                  /* ========================================= */
-                  /* PATIENT REGISTRATION FORM ONLY            */
-                  /* ========================================= */
+                {authModalMode === 'signup' && (
                   <>
-                    <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 text-xs text-neutral-600">
-                      <strong>Patient Portal Registration:</strong> Create an account to access prescribed clinical videos, breathing tools, and manage your appointments.
+                    {/* Role selector during signup */}
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1.5">
+                        Account Type *
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('patient')}
+                          className={`p-2.5 rounded-lg border text-left flex items-start gap-2 transition-all ${
+                            selectedRole === 'patient'
+                              ? 'border-neutral-950 bg-neutral-950 text-white shadow-xs'
+                              : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+                          }`}
+                        >
+                          <HeartHandshake className="w-4 h-4 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="block text-xs font-bold">Patient</span>
+                            <span className={`block text-[10px] ${selectedRole === 'patient' ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                              Personal Portal & Videos
+                            </span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRole('admin')}
+                          className={`p-2.5 rounded-lg border text-left flex items-start gap-2 transition-all ${
+                            selectedRole === 'admin'
+                              ? 'border-neutral-950 bg-neutral-950 text-white shadow-xs'
+                              : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
+                          }`}
+                        >
+                          <Stethoscope className="w-4 h-4 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="block text-xs font-bold">Doctor / Admin</span>
+                            <span className={`block text-[10px] ${selectedRole === 'admin' ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                              Clinic Management & PINs
+                            </span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -334,7 +411,7 @@ export const AuthModal: React.FC = () => {
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          placeholder="e.g. Farooq Ahmad"
+                          placeholder={selectedRole === 'admin' ? 'Dr. Malik Sayar' : 'Aamir Mir'}
                           className="w-full pl-9 pr-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
                         />
                       </div>
@@ -342,13 +419,12 @@ export const AuthModal: React.FC = () => {
 
                     <div>
                       <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1">
-                        Phone Number *
+                        Phone Number
                       </label>
                       <div className="relative">
                         <Phone className="w-4 h-4 absolute left-3 top-3 text-neutral-400" />
                         <input
                           type="tel"
-                          required
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="+91 6005754205"
@@ -357,9 +433,9 @@ export const AuthModal: React.FC = () => {
                       </div>
                     </div>
                   </>
-                ) : null}
+                )}
 
-                {/* Common Email & Password Fields */}
+                {/* Email Address */}
                 <div>
                   <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1">
                     Email Address *
@@ -371,12 +447,19 @@ export const AuthModal: React.FC = () => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={authModalMode === 'signin' ? 'doctor@realitymindclinic.com or patient@example.com' : 'patient@example.com'}
+                      placeholder={
+                        authModalMode === 'signin'
+                          ? 'doctor@realitymindclinic.com or patient@example.com'
+                          : selectedRole === 'admin'
+                          ? 'doctor@realitymindclinic.com'
+                          : 'patient@example.com'
+                      }
                       className="w-full pl-9 pr-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
                     />
                   </div>
                 </div>
 
+                {/* Password */}
                 <div>
                   <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1">
                     Password *
@@ -403,35 +486,35 @@ export const AuthModal: React.FC = () => {
                   {loading
                     ? 'Processing...'
                     : authModalMode === 'signin'
-                    ? 'Sign In to Portal'
-                    : 'Complete Patient Registration'}
+                    ? 'Sign In & Redirect'
+                    : `Create ${selectedRole === 'admin' ? 'Doctor' : 'Patient'} Account`}
                 </button>
               </form>
 
-              {/* Quick Login Options */}
+              {/* Instant 1-Click Access for Testing */}
               {authModalMode === 'signin' && (
                 <div className="pt-3 border-t border-neutral-200 space-y-2">
                   <span className="block text-[10px] font-mono text-neutral-400 uppercase tracking-wider text-center">
-                    Instant 1-Click Access
+                    Instant 1-Click Access (Auto-Redirect)
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => handleQuickLogin('doctor')}
-                      className="p-2 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-bold text-neutral-900 bg-neutral-50 flex items-center justify-center gap-1.5 transition-colors"
-                      title="Log in directly as Dr. Malik Sayar (Admin)"
+                      className="p-2.5 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-bold text-neutral-900 bg-neutral-50 flex items-center justify-center gap-1.5 transition-colors group"
+                      title="Log in directly as Dr. Malik Sayar and open /admin"
                     >
-                      <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-neutral-900 group-hover:scale-110 transition-transform" />
                       <span>Doctor / Admin</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleQuickLogin('patient')}
-                      className="p-2 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-medium text-neutral-700 bg-white flex items-center justify-center gap-1.5 transition-colors"
-                      title="Log in directly as Patient Aamir Mir"
+                      className="p-2.5 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-medium text-neutral-700 bg-white flex items-center justify-center gap-1.5 transition-colors group"
+                      title="Log in directly as Patient Aamir Mir and open /patient-portal"
                     >
-                      <UserIcon className="w-3.5 h-3.5 text-neutral-600" />
+                      <UserIcon className="w-3.5 h-3.5 text-neutral-600 group-hover:scale-110 transition-transform" />
                       <span>Patient (Aamir Mir)</span>
                     </button>
                   </div>
