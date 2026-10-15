@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT NOT NULL,
   name TEXT NOT NULL,
   phone TEXT,
-  role TEXT NOT NULL DEFAULT 'patient' CHECK (role IN ('patient', 'psychologist')),
+  role TEXT NOT NULL DEFAULT 'patient' CHECK (role IN ('patient', 'admin', 'psychologist')),
   avatar TEXT,
   unlocked_video_ids TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -44,13 +44,19 @@ BEGIN
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    COALESCE(new.raw_user_meta_data->>'phone', ''),
     CASE
-      WHEN lower(new.email) IN ('doctor@realitymindclinic.com', 'clinic@realitymind.com') THEN 'admin'
+      WHEN lower(new.email) IN ('doctor@realitymindclinic.com', 'clinic@realitymind.com', 'admin@realitymindclinic.com') THEN 'admin'
+      WHEN new.raw_user_meta_data->>'role' = 'admin' THEN 'admin'
+      WHEN new.raw_user_meta_data->>'role' = 'psychologist' THEN 'psychologist'
       ELSE 'patient'
     END,
     '{}'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    role = EXCLUDED.role,
+    name = EXCLUDED.name,
+    phone = EXCLUDED.phone;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
