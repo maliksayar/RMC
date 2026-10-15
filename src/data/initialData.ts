@@ -514,12 +514,12 @@ export const DEMO_USERS: User[] = [
     unlockedVideoIds: ['cbt-basics', 'diaphragmatic-breathing', 'grounding-54321', 'thought-defusion-worry']
   },
   {
-    id: 'psych-lead',
-    name: 'Dr. Psychologist (Bijbehara)',
-    email: 'clinic@realitymind.com',
+    id: 'doctor-lead',
+    name: 'Dr. Malik Sayar (Doctor Admin)',
+    email: 'doctor@realitymindclinic.com',
     phone: '6005754205',
-    role: 'psychologist',
+    role: 'admin',
     createdAt: '2026-01-01',
-    unlockedVideoIds: INITIAL_INTERVENTIONS.map(v => v.id)
+    unlockedVideoIds: INITIAL_INTERVENTIONS.map((v) => v.id)
   }
 ];

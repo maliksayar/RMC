@@ -21,6 +21,7 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.50.0",
     "pngjs": "^7.0.0",

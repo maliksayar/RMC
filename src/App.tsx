@@ -13,11 +13,14 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfUsePage } from './pages/TermsOfUsePage';
 import { DisclaimerPage } from './pages/DisclaimerPage';
 import { PsychologistDashboard } from './pages/PsychologistDashboard';
+import { AdminDashboard } from './pages/AdminDashboard';
 import { PatientPortal } from './pages/PatientPortal';
 import { PinUnlockModal } from './components/PinUnlockModal';
 import { BookingModal } from './components/BookingModal';
 import { InterventionPlayerModal } from './components/InterventionPlayerModal';
 import { ArticleModal } from './components/ArticleModal';
+import { AuthModal } from './components/AuthModal';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Auto-scroll to top on route change
 const ScrollToTop: React.FC = () => {
@@ -46,8 +49,30 @@ export const AppContent: React.FC = () => {
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfUsePage />} />
           <Route path="/disclaimer" element={<DisclaimerPage />} />
-          <Route path="/psychologist-dashboard" element={<PsychologistDashboard />} />
-          <Route path="/patient-portal" element={<PatientPortal />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'psychologist']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'psychologist']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient-portal"
+            element={
+              <ProtectedRoute allowedRoles={['patient', 'admin', 'psychologist']}>
+                <PatientPortal />
+              </ProtectedRoute>
+            }
+          />
           {/* Catch-all fallback */}
           <Route path="*" element={<HomePage />} />
         </Routes>
@@ -60,6 +85,7 @@ export const AppContent: React.FC = () => {
       <BookingModal />
       <InterventionPlayerModal />
       <ArticleModal />
+      <AuthModal />
     </div>
   );
 };

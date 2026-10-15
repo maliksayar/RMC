@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Bell,
@@ -8,7 +8,13 @@ import {
   Menu,
   X,
   MapPin,
-  MessageCircle
+  MessageCircle,
+  User as UserIcon,
+  LogIn,
+  UserPlus,
+  LogOut,
+  ChevronDown,
+  LayoutDashboard
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ClinicLogo } from './ClinicLogo';
@@ -16,16 +22,22 @@ import { ClinicLogo } from './ClinicLogo';
 export const Navbar: React.FC = () => {
   const {
     role,
+    isAdmin,
     switchRole,
     currentUser,
     notifications,
     markNotificationAsRead,
-    setBookingModalOpen
+    setBookingModalOpen,
+    openAuthModal,
+    logout,
+    isSupabaseLive
   } = useApp();
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const isActive = (path: string) => location.pathname === path;
@@ -75,44 +87,15 @@ export const Navbar: React.FC = () => {
               <MessageCircle className="w-3 h-3" />
               <span>WhatsApp Booking</span>
             </a>
-
-            <span className="text-neutral-700">|</span>
-
-            {/* Portal Switcher Pill */}
-            <div className="inline-flex items-center bg-neutral-900 border border-neutral-700 rounded-full p-0.5">
-              <button
-                type="button"
-                onClick={() => switchRole('patient')}
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
-                  role === 'patient'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                Patient
-              </button>
-              <button
-                type="button"
-                onClick={() => switchRole('psychologist')}
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 transition-all ${
-                  role === 'psychologist'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                <ShieldCheck className="w-2.5 h-2.5" />
-                <span>Doctor</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Main Professional Navigation Header */}
+      {/* 2. Main Navigation Header */}
       <header className="sticky top-0 z-40 bg-white/98 backdrop-blur-md border-b border-neutral-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            {/* Left: ONLY THE LOGO ICON (NO NAME/TEXT in navbar as instructed) */}
+            {/* Left: ONLY THE LOGO ICON */}
             <Link
               to="/"
               className="shrink-0 flex items-center pr-4 xl:pr-6 focus:outline-hidden group"
@@ -121,7 +104,7 @@ export const Navbar: React.FC = () => {
               <ClinicLogo size="md" showWordmark={false} />
             </Link>
 
-            {/* Center: Navigation Links with balanced uniform spacing */}
+            {/* Center: Navigation Links */}
             <nav className="hidden lg:flex items-center gap-5 xl:gap-7 2xl:gap-8">
               {navLinks.map((link) => {
                 const active = isActive(link.path);
@@ -140,21 +123,23 @@ export const Navbar: React.FC = () => {
                 );
               })}
 
-              {role === 'psychologist' && (
+              {/* Role-Based Portal Links */}
+              {isAdmin && (
                 <Link
-                  to="/psychologist-dashboard"
-                  className={`text-[12px] font-semibold px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-                    isActive('/psychologist-dashboard')
-                      ? 'bg-neutral-950 text-white border-neutral-950'
-                      : 'border-neutral-300 text-neutral-900 bg-neutral-50 hover:border-black'
+                  to="/admin"
+                  className={`text-[12px] font-bold px-3 py-1.5 rounded-md border transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    isActive('/admin') || isActive('/psychologist-dashboard')
+                      ? 'bg-neutral-950 text-white border-neutral-950 shadow-xs'
+                      : 'border-neutral-800 text-neutral-900 bg-neutral-100 hover:bg-neutral-200'
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Doctor Dashboard</span>
+                  <span>Admin Panel</span>
                 </Link>
               )}
 
-              {role === 'patient' && currentUser && (
+              {/* Patient Portal Link (Only for Patients) */}
+              {currentUser && !isAdmin && (
                 <Link
                   to="/patient-portal"
                   className={`text-[13px] font-medium transition-colors py-2 relative whitespace-nowrap ${
@@ -168,13 +153,13 @@ export const Navbar: React.FC = () => {
               )}
             </nav>
 
-            {/* Right: Action Buttons with uniform h-10 height */}
-            <div className="hidden lg:flex items-center gap-3 shrink-0">
+            {/* Right: Action Buttons & Authentication Buttons */}
+            <div className="hidden lg:flex items-center gap-2.5 shrink-0">
               {/* Book Consultation Button */}
               <button
                 type="button"
                 onClick={() => setBookingModalOpen(true)}
-                className="h-10 px-5 bg-neutral-950 text-white text-xs font-semibold uppercase tracking-wider rounded-md hover:bg-neutral-800 transition-all flex items-center gap-2 shadow-xs whitespace-nowrap"
+                className="h-10 px-4 bg-neutral-950 text-white text-xs font-semibold uppercase tracking-wider rounded-md hover:bg-neutral-800 transition-all flex items-center gap-1.5 shadow-xs whitespace-nowrap"
               >
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
                 <span>Book Consultation</span>
@@ -236,14 +221,148 @@ export const Navbar: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* ======================================================== */}
+              {/* AUTHENTICATION: LOGIN & REGISTER (OR LOGGED-IN PROFILE) */}
+              {/* ======================================================== */}
+              {currentUser ? (
+                /* Logged-In User Profile Pill with Quick Dropdown */
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="h-10 px-3 border border-neutral-300 rounded-md flex items-center gap-2 hover:border-black transition-all bg-neutral-50"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-neutral-900 text-white text-[11px] flex items-center justify-center font-bold">
+                      {currentUser.name.charAt(0)}
+                    </div>
+                    <div className="text-left text-xs leading-tight">
+                      <span className="font-bold text-neutral-900 block max-w-[95px] truncate">
+                        {currentUser.name.split(' ')[0]}
+                      </span>
+                      <span
+                        className={`text-[9px] uppercase font-mono font-bold block ${
+                          isAdmin ? 'text-black' : 'text-neutral-500'
+                        }`}
+                      >
+                        {isAdmin ? 'Doctor' : 'Patient'}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
+                  </button>
+
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 space-y-1">
+                      <div className="p-2 border-b border-neutral-100">
+                        <div className="text-xs font-bold text-neutral-950 truncate">
+                          {currentUser.name}
+                        </div>
+                        <div className="text-[11px] text-neutral-500 truncate">
+                          {currentUser.email}
+                        </div>
+                        <span className="inline-block mt-1 text-[9px] font-mono uppercase bg-neutral-100 px-2 py-0.5 rounded font-bold text-neutral-800">
+                          Role: {currentUser.role}
+                        </span>
+                      </div>
+
+                      {isAdmin ? (
+                        <Link
+                          to="/admin"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>Admin Control Panel</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/patient-portal"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                        >
+                          <UserIcon className="w-4 h-4" />
+                          <span>Patient Portal</span>
+                        </Link>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          openAuthModal('signin');
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4" />
+                        <span>Manage Account</span>
+                      </button>
+
+                      <div className="pt-1 border-t border-neutral-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Distinct Login & Register Buttons */
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal('signin')}
+                    className="h-10 px-3.5 border border-neutral-300 rounded-md text-xs font-semibold text-neutral-800 hover:border-black flex items-center gap-1.5 transition-colors bg-white hover:bg-neutral-50 shadow-2xs"
+                  >
+                    <LogIn className="w-3.5 h-3.5 text-neutral-700" />
+                    <span>Login</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal('signup')}
+                    className="h-10 px-3.5 bg-neutral-950 text-white rounded-md text-xs font-semibold hover:bg-neutral-800 flex items-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Register</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Mobile Actions */}
             <div className="flex lg:hidden items-center gap-2">
+              {currentUser ? (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('signin')}
+                  className="h-9 px-2.5 border border-neutral-300 rounded text-neutral-800 text-xs font-semibold flex items-center gap-1"
+                >
+                  <UserIcon className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-mono">{currentUser.name.split(' ')[0]}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('signin')}
+                  className="h-9 px-2.5 border border-neutral-300 rounded text-neutral-800 text-xs font-semibold flex items-center gap-1"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Login</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setBookingModalOpen(true)}
-                className="h-9 px-3.5 bg-neutral-950 text-white rounded text-xs font-semibold uppercase tracking-wider"
+                className="h-9 px-3 bg-neutral-950 text-white rounded text-xs font-semibold uppercase tracking-wider"
               >
                 Book
               </button>
@@ -263,32 +382,7 @@ export const Navbar: React.FC = () => {
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-neutral-200 bg-white px-5 pt-3 pb-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                Portal View
-              </span>
-              <div className="inline-flex items-center bg-neutral-100 border border-neutral-200 p-0.5 rounded-full text-xs">
-                <button
-                  type="button"
-                  onClick={() => switchRole('patient')}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    role === 'patient' ? 'bg-black text-white' : 'text-neutral-600'
-                  }`}
-                >
-                  Patient
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchRole('psychologist')}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    role === 'psychologist' ? 'bg-black text-white' : 'text-neutral-600'
-                  }`}
-                >
-                  Doctor
-                </button>
-              </div>
-            </div>
-
+            {/* Links */}
             <nav className="flex flex-col space-y-2 text-sm font-semibold text-neutral-800">
               {navLinks.map((link) => (
                 <Link
@@ -301,18 +395,18 @@ export const Navbar: React.FC = () => {
                 </Link>
               ))}
 
-              {role === 'psychologist' && (
+              {isAdmin && (
                 <Link
-                  to="/psychologist-dashboard"
+                  to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="py-2 bg-neutral-100 px-3 rounded flex items-center gap-2 text-neutral-900"
+                  className="py-2.5 bg-neutral-100 px-3 rounded flex items-center gap-2 text-neutral-900 font-bold"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Psychologist Panel</span>
+                  <ShieldCheck className="w-4 h-4 text-black" />
+                  <span>Doctor Admin Panel</span>
                 </Link>
               )}
 
-              {role === 'patient' && currentUser && (
+              {currentUser && !isAdmin && (
                 <Link
                   to="/patient-portal"
                   onClick={() => setMobileMenuOpen(false)}
@@ -323,14 +417,62 @@ export const Navbar: React.FC = () => {
               )}
             </nav>
 
-            <div className="pt-2 flex flex-col gap-2">
+            {/* Auth in Mobile Menu */}
+            <div className="pt-2 flex flex-col gap-2 border-t border-neutral-100">
+              {currentUser ? (
+                <div className="space-y-2">
+                  <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-200 text-xs">
+                    <div className="font-bold text-neutral-900">{currentUser.name}</div>
+                    <div className="text-[11px] text-neutral-500">
+                      Logged in as <strong>{currentUser.role.toUpperCase()}</strong>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full py-2 border border-red-300 text-red-700 rounded text-xs font-semibold uppercase tracking-wider text-center"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('signin');
+                    }}
+                    className="w-full border border-neutral-300 py-2.5 rounded font-semibold text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 text-neutral-900"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Login</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('signup');
+                    }}
+                    className="w-full bg-neutral-950 text-white py-2.5 rounded font-semibold text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Register</span>
+                  </button>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setBookingModalOpen(true);
                 }}
-                className="w-full bg-black text-white py-2.5 rounded font-semibold text-xs uppercase tracking-wider text-center"
+                className="w-full bg-black text-white py-2.5 rounded font-semibold text-xs uppercase tracking-wider text-center mt-1"
               >
                 Book Consultation Slot
               </button>

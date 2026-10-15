@@ -15,42 +15,50 @@ import {
   INITIAL_ARTICLES,
   DEMO_USERS
 } from '../data/initialData';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { dbService } from '../lib/supabaseService';
+import { authService, SignUpData } from '../lib/authService';
 
 interface AppContextType {
   currentUser: User | null;
   role: UserRole;
+  isAdmin: boolean;
+  isSupabaseLive: boolean;
   switchRole: (role: UserRole) => void;
   loginAs: (user: User) => void;
+  loginWithSupabase: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  signUpWithSupabase: (data: SignUpData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  
+
   // Interventions
   interventions: InterventionVideo[];
   unlockedVideoIds: string[];
   addIntervention: (video: Omit<InterventionVideo, 'id'>) => void;
   updateIntervention: (id: string, updates: Partial<InterventionVideo>) => void;
   deleteIntervention: (id: string) => void;
-  
+
   // PINs
   pins: AccessPin[];
   activeUnlockedPin: AccessPin | null;
   verifyAndUnlockPin: (code: string) => { success: boolean; message: string; pin?: AccessPin };
-  generatePin: (patientName: string, assignedVideoIds: string[], expiryDays: number, notes?: string) => AccessPin;
+  generatePin: (patientName: string, assignedVideoIds: string[], expiryDays?: number, notes?: string) => AccessPin;
   revokePin: (pinId: string) => void;
-  
+
   // Appointments
   appointments: Appointment[];
   bookAppointment: (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'status'>) => Appointment;
   updateAppointmentStatus: (id: string, status: Appointment['status']) => void;
-  
+
   // Articles
   articles: BlogArticle[];
   publishArticle: (article: Omit<BlogArticle, 'id' | 'publishedDate'>) => void;
-  
+
   // Notifications
   notifications: SystemNotification[];
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
-  
+  broadcastNotification: (title: string, message: string, targetUserId?: string) => void;
+
   // Global Modals State
   pinModalOpen: boolean;
   setPinModalOpen: (open: boolean) => void;
@@ -58,6 +66,9 @@ interface AppContextType {
   setBookingModalOpen: (open: boolean) => void;
   authModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
+  authModalMode: 'signin' | 'signup';
+  setAuthModalMode: (mode: 'signin' | 'signup') => void;
+  openAuthModal: (mode?: 'signin' | 'signup') => void;
   activeVideo: InterventionVideo | null;
   setActiveVideo: (video: InterventionVideo | null) => void;
   activeArticle: BlogArticle | null;
@@ -74,6 +85,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const role: UserRole = currentUser?.role || 'patient';
+  const isAdmin = role === 'admin' || role === 'psychologist';
+  const isSupabaseLive = isSupabaseConfigured;
 
   // Interventions library
   const [interventions, setInterventions] = useState<InterventionVideo[]>(() => {
@@ -142,7 +155,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: 'notif-2',
         userId: 'patient-demo-1',
         title: 'Appointment Reminder',
-        message: 'In-clinic consultation scheduled for Oct 5 at Tak Mohalla Road, Bijbehara.',
+        message: 'In-clinic consultation scheduled at Tak Mohalla Road, Bijbehara.',
         date: 'Yesterday',
         read: false,
         type: 'appointment'
@@ -154,8 +167,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [activeVideo, setActiveVideo] = useState<InterventionVideo | null>(null);
   const [activeArticle, setActiveArticle] = useState<BlogArticle | null>(null);
+
+  const openAuthModal = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
 
   // Sync to localStorage
   useEffect(() => {
@@ -186,10 +205,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('rmc_articles', JSON.stringify(articles));
   }, [articles]);
 
+  // ==========================================
+  // INITIALIZE SUPABASE SESSION & DATABASE SYNC
+  // ==========================================
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    // 1. Initial auth listener & session restore
+    const restoreSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const profile = await dbService.getProfile(session.user.id);
+          if (profile) {
+            setCurrentUser(profile);
+            if (profile.role === 'admin' || profile.role === 'psychologist') {
+              setUnlockedVideoIds(interventions.map((v) => v.id));
+            } else if (profile.unlockedVideoIds && profile.unlockedVideoIds.length > 0) {
+              setUnlockedVideoIds(profile.unlockedVideoIds);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase session load error:', err);
+      }
+    };
+
+    restoreSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const profile = await dbService.getProfile(session.user.id);
+        if (profile) {
+          setCurrentUser(profile);
+          if (profile.role === 'admin' || profile.role === 'psychologist') {
+            setUnlockedVideoIds(interventions.map((v) => v.id));
+          } else if (profile.unlockedVideoIds) {
+            setUnlockedVideoIds(profile.unlockedVideoIds);
+          }
+        }
+      }
+    });
+
+    // 2. Fetch data from Supabase DB
+    const loadSupabaseData = async () => {
+      try {
+        const [dbInterventions, dbAppointments, dbPins, dbArticles, dbNotifications] = await Promise.all([
+          dbService.getInterventions(),
+          dbService.getAppointments(),
+          dbService.getPins(),
+          dbService.getArticles(),
+          dbService.getNotifications()
+        ]);
+
+        if (dbInterventions && dbInterventions.length > 0) {
+          setInterventions(dbInterventions);
+        }
+        if (dbAppointments && dbAppointments.length > 0) {
+          setAppointments(dbAppointments);
+        }
+        if (dbPins && dbPins.length > 0) {
+          setPins(dbPins);
+        }
+        if (dbArticles && dbArticles.length > 0) {
+          setArticles(dbArticles);
+        }
+        if (dbNotifications && dbNotifications.length > 0) {
+          setNotifications(dbNotifications);
+        }
+      } catch (e) {
+        console.warn('Failed loading data from Supabase tables:', e);
+      }
+    };
+
+    loadSupabaseData();
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
   const switchRole = (newRole: UserRole) => {
-    if (newRole === 'psychologist') {
-      setCurrentUser(DEMO_USERS[1]);
-      // Psychologist has master access to all videos
+    if (newRole === 'admin' || newRole === 'psychologist') {
+      setCurrentUser({
+        ...DEMO_USERS[1],
+        role: 'admin'
+      });
       setUnlockedVideoIds(interventions.map((v) => v.id));
     } else {
       setCurrentUser(DEMO_USERS[0]);
@@ -203,21 +304,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loginAs = (user: User) => {
     setCurrentUser(user);
-    if (user.role === 'psychologist') {
+    if (user.role === 'admin' || user.role === 'psychologist') {
       setUnlockedVideoIds(interventions.map((v) => v.id));
     } else if (user.unlockedVideoIds) {
       setUnlockedVideoIds(user.unlockedVideoIds);
     }
   };
 
-  const logout = () => {
+  const loginWithSupabase = async (email: string, pass: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isSupabaseConfigured) {
+      return { success: false, message: 'Supabase credentials are not configured in .env yet.' };
+    }
+    try {
+      const res = await authService.signIn(email, pass);
+      if (res?.user) {
+        const profile = await dbService.getProfile(res.user.id);
+        if (profile) {
+          setCurrentUser(profile);
+          if (profile.role === 'admin' || profile.role === 'psychologist') {
+            setUnlockedVideoIds(interventions.map((v) => v.id));
+          } else if (profile.unlockedVideoIds) {
+            setUnlockedVideoIds(profile.unlockedVideoIds);
+          }
+        }
+        return { success: true };
+      }
+      return { success: false, message: 'Could not log in with given credentials.' };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Login error occurred.' };
+    }
+  };
+
+  const signUpWithSupabase = async (data: SignUpData): Promise<{ success: boolean; message?: string }> => {
+    if (!isSupabaseConfigured) {
+      return { success: false, message: 'Supabase credentials are not configured in .env yet.' };
+    }
+    try {
+      const res = await authService.signUp(data);
+      if (res?.user) {
+        return {
+          success: true,
+          message: 'Account created! Please check your email inbox if email confirmation is turned on.'
+        };
+      }
+      return { success: false, message: 'Could not complete registration.' };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Registration error occurred.' };
+    }
+  };
+
+  const logout = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        await authService.signOut();
+      } catch (e) {
+        console.warn('Sign out error:', e);
+      }
+    }
     setCurrentUser(null);
     setUnlockedVideoIds([]);
     setActiveUnlockedPin(null);
   };
 
   // Verify PIN logic
-  const verifyAndUnlockPin = (code: string): { success: boolean; message: string; pin?: AccessPin } => {
+  const verifyAndUnlockPin = (
+    code: string
+  ): { success: boolean; message: string; pin?: AccessPin } => {
     const cleanCode = code.trim().toUpperCase();
     const pin = pins.find((p) => p.code.toUpperCase() === cleanCode);
 
@@ -239,6 +391,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updatedUnlocked = Array.from(new Set([...unlockedVideoIds, ...pin.assignedVideoIds]));
     setUnlockedVideoIds(updatedUnlocked);
 
+    // If user is logged in, sync unlocked IDs to their profile in Supabase DB
+    if (currentUser?.id && isSupabaseConfigured) {
+      dbService.updateProfile(currentUser.id, {
+        unlockedVideoIds: updatedUnlocked
+      }).catch(console.warn);
+    }
+
     // Add alert notification
     const newNotif: SystemNotification = {
       id: `notif-${Date.now()}`,
@@ -250,6 +409,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'pin'
     };
     setNotifications((prev) => [newNotif, ...prev]);
+
+    if (isSupabaseConfigured) {
+      dbService.createNotification(newNotif).catch(console.warn);
+    }
 
     return {
       success: true,
@@ -285,6 +448,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setPins((prev) => [newPin, ...prev]);
+
+    if (isSupabaseConfigured) {
+      dbService.createPin(newPin).catch(console.warn);
+    }
+
     return newPin;
   };
 
@@ -292,10 +460,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPins((prev) =>
       prev.map((p) => (p.id === pinId ? { ...p, status: 'revoked' as const } : p))
     );
+
+    if (isSupabaseConfigured) {
+      dbService.updatePinStatus(pinId, 'revoked').catch(console.warn);
+    }
   };
 
   // Book appointment
-  const bookAppointment = (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'status'>): Appointment => {
+  const bookAppointment = (
+    appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'status'>
+  ): Appointment => {
     const newApt: Appointment = {
       ...appointmentData,
       id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -317,6 +491,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setNotifications((prev) => [notif, ...prev]);
 
+    // Sync to Supabase DB
+    if (isSupabaseConfigured) {
+      dbService.createAppointment(newApt).catch(console.warn);
+      dbService.createNotification(notif).catch(console.warn);
+    }
+
     return newApt;
   };
 
@@ -324,6 +504,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAppointments((prev) =>
       prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
     );
+
+    if (isSupabaseConfigured) {
+      dbService.updateAppointmentStatus(id, status).catch(console.warn);
+    }
   };
 
   // Interventions library management
@@ -333,16 +517,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `video-${Date.now()}`
     };
     setInterventions((prev) => [...prev, newVideo]);
+
+    if (isSupabaseConfigured) {
+      dbService.createIntervention(newVideo).catch(console.warn);
+    }
   };
 
   const updateIntervention = (id: string, updates: Partial<InterventionVideo>) => {
     setInterventions((prev) =>
       prev.map((v) => (v.id === id ? { ...v, ...updates } : v))
     );
+
+    if (isSupabaseConfigured) {
+      dbService.updateIntervention(id, updates).catch(console.warn);
+    }
   };
 
   const deleteIntervention = (id: string) => {
     setInterventions((prev) => prev.filter((v) => v.id !== id));
+
+    if (isSupabaseConfigured) {
+      dbService.deleteIntervention(id).catch(console.warn);
+    }
   };
 
   // Articles
@@ -357,6 +553,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     };
     setArticles((prev) => [newArticle, ...prev]);
+
+    if (isSupabaseConfigured) {
+      dbService.createArticle(newArticle).catch(console.warn);
+    }
   };
 
   // Notifications
@@ -364,10 +564,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+
+    if (isSupabaseConfigured) {
+      dbService.markNotificationRead(id).catch(console.warn);
+    }
   };
 
   const clearNotifications = () => {
     setNotifications([]);
+  };
+
+  const broadcastNotification = (title: string, message: string, targetUserId: string = 'all') => {
+    const notif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      userId: targetUserId,
+      title,
+      message,
+      date: 'Just now',
+      read: false,
+      type: 'system'
+    };
+    setNotifications((prev) => [notif, ...prev]);
+
+    if (isSupabaseConfigured) {
+      dbService.createNotification(notif).catch(console.warn);
+    }
   };
 
   return (
@@ -375,8 +596,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentUser,
         role,
+        isAdmin,
+        isSupabaseLive,
         switchRole,
         loginAs,
+        loginWithSupabase,
+        signUpWithSupabase,
         logout,
         interventions,
         unlockedVideoIds,
@@ -396,12 +621,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notifications,
         markNotificationAsRead,
         clearNotifications,
+        broadcastNotification,
         pinModalOpen,
         setPinModalOpen,
         bookingModalOpen,
         setBookingModalOpen,
         authModalOpen,
         setAuthModalOpen,
+        authModalMode,
+        setAuthModalMode,
+        openAuthModal,
         activeVideo,
         setActiveVideo,
         activeArticle,

@@ -1,4 +1,7 @@
-export type UserRole = 'patient' | 'psychologist';
+export type UserRole = 'patient' | 'admin' | 'psychologist';
+
+export const isUserAdmin = (role?: UserRole | null): boolean =>
+  role === 'admin' || role === 'psychologist';
 
 export interface User {
   id: string;

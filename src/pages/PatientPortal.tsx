@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   User,
   KeyRound,
@@ -18,6 +19,7 @@ import { useApp } from '../context/AppContext';
 export const PatientPortal: React.FC = () => {
   const {
     currentUser,
+    isAdmin,
     activeUnlockedPin,
     unlockedVideoIds,
     interventions,
@@ -45,11 +47,15 @@ export const PatientPortal: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase bg-neutral-100 px-2 py-0.5 rounded font-bold text-neutral-800">
-                Registered Patient
+              <span
+                className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
+                  isAdmin ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-800'
+                }`}
+              >
+                {isAdmin ? 'Doctor View (Patient Portal Preview)' : 'Registered Patient'}
               </span>
               <span className="text-[10px] text-neutral-400">
-                ID: {currentUser?.id || 'pat-101'}
+                ID: {currentUser?.id?.slice(0, 12) || 'pat-101'}
               </span>
             </div>
             <h1 className="font-garamond text-2xl sm:text-3xl font-bold text-neutral-950 mt-1">
@@ -61,9 +67,17 @@ export const PatientPortal: React.FC = () => {
           </div>
         </div>
 
-        {/* Active Prescription Badge */}
+        {/* Active Prescription Badge & Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          {activeUnlockedPin ? (
+          {isAdmin ? (
+            <Link
+              to="/admin"
+              className="bg-neutral-950 text-white px-4 py-2 rounded text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 flex items-center gap-1.5 shadow-xs"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Back to Doctor Admin Panel</span>
+            </Link>
+          ) : activeUnlockedPin ? (
             <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-xs space-y-1">
               <div className="flex items-center gap-2 text-emerald-800 font-semibold">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
