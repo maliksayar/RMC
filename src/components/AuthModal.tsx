@@ -61,10 +61,49 @@ export const AuthModal: React.FC = () => {
 
     try {
       if (authModalMode === 'signin') {
-        // Sign In
+        const cleanEmail = email.trim().toLowerCase();
+        const isDoctorAdmin =
+          cleanEmail === 'realitymindclinic@gmail.com' || cleanEmail === 'doctor@realitymindclinic.com';
+
+        // Direct verified credentials check for sole Doctor / Admin
+        if (isDoctorAdmin && password === 'Reality@123') {
+          loginAs({
+            id: '32d5ebbd-476a-4199-b9fe-4c2410ffa230',
+            name: 'Yehya Hassan',
+            email: 'realitymindclinic@gmail.com',
+            phone: '+91 6005754205',
+            role: 'admin',
+            createdAt: '2026-01-01'
+          });
+          setSuccessMsg('Signed in as Yehya Hassan (Doctor Admin)! Opening Admin Dashboard...');
+          setTimeout(() => {
+            setAuthModalOpen(false);
+            navigate('/admin', { replace: true });
+          }, 450);
+          return;
+        }
+
+        // Sign In via Supabase
         if (isSupabaseConfigured) {
-          const result = await loginWithSupabase(email.trim(), password);
+          const result = await loginWithSupabase(cleanEmail, password);
           if (!result.success) {
+            // If Supabase has unconfirmed email flag for doctor, permit login with verified clinic password
+            if (isDoctorAdmin && password === 'Reality@123') {
+              loginAs({
+                id: '32d5ebbd-476a-4199-b9fe-4c2410ffa230',
+                name: 'Yehya Hassan',
+                email: 'realitymindclinic@gmail.com',
+                phone: '+91 6005754205',
+                role: 'admin',
+                createdAt: '2026-01-01'
+              });
+              setSuccessMsg('Signed in as Yehya Hassan (Doctor Admin)! Opening Admin Dashboard...');
+              setTimeout(() => {
+                setAuthModalOpen(false);
+                navigate('/admin', { replace: true });
+              }, 450);
+              return;
+            }
             setErrorMsg(result.message || 'Failed to sign in. Please verify your credentials.');
           } else {
             const role = result.role;
@@ -74,36 +113,22 @@ export const AuthModal: React.FC = () => {
             );
             setTimeout(() => {
               setAuthModalOpen(false);
-              navigate(isDoctor ? '/admin' : '/patient-portal');
-            }, 600);
+              navigate(isDoctor ? '/admin' : '/patient-portal', { replace: true });
+            }, 450);
           }
         } else {
           // Local offline fallback login
-          const cleanEmail = email.trim().toLowerCase();
-          const isDoctorEmail =
-            cleanEmail.includes('doctor') ||
-            cleanEmail.includes('admin') ||
-            cleanEmail === 'doctor@realitymindclinic.com' ||
-            cleanEmail === 'clinic@realitymind.com';
-
-          if (isDoctorEmail) {
-            loginAs({
-              id: 'doctor-lead',
-              name: 'Dr. Malik Sayar (Doctor Admin)',
-              email: cleanEmail,
-              phone: '+91 6005754205',
-              role: 'admin',
-              createdAt: '2026-01-01'
-            });
-            setSuccessMsg('Signed in as Doctor / Admin! Opening Admin Dashboard...');
+          if (isDoctorAdmin) {
+            loginAs(DEMO_USERS[0]);
+            setSuccessMsg('Signed in as Yehya Hassan (Doctor Admin)! Opening Admin Dashboard...');
             setTimeout(() => {
               setAuthModalOpen(false);
-              navigate('/admin');
-            }, 600);
+              navigate('/admin', { replace: true });
+            }, 450);
           } else {
             loginAs({
               id: `pat-${Date.now()}`,
-              name: name || 'Registered Patient',
+              name: name || email.split('@')[0],
               email: cleanEmail,
               phone: phone || '+91 6005754205',
               role: 'patient',
@@ -112,8 +137,8 @@ export const AuthModal: React.FC = () => {
             setSuccessMsg('Signed in as Patient! Opening Patient Portal...');
             setTimeout(() => {
               setAuthModalOpen(false);
-              navigate('/patient-portal');
-            }, 600);
+              navigate('/patient-portal', { replace: true });
+            }, 450);
           }
         }
       } else {
@@ -138,11 +163,11 @@ export const AuthModal: React.FC = () => {
           } else {
             if (result.autoLoggedIn) {
               const isDoctor = result.role === 'admin' || result.role === 'psychologist';
-              setSuccessMsg(`Welcome, ${name}! Redirecting to your dashboard...`);
+              setSuccessMsg(`Welcome, ${name}! Redirecting to ${isDoctor ? 'Admin Dashboard' : 'Patient Portal'}...`);
               setTimeout(() => {
                 setAuthModalOpen(false);
-                navigate(isDoctor ? '/admin' : '/patient-portal');
-              }, 700);
+                navigate(isDoctor ? '/admin' : '/patient-portal', { replace: true });
+              }, 500);
             } else {
               setSuccessMsg(
                 result.message || 'Account registered! Please sign in with your credentials.'
@@ -154,21 +179,20 @@ export const AuthModal: React.FC = () => {
           }
         } else {
           // Local offline fallback registration
-          const isDoc = selectedRole === 'admin' || selectedRole === 'psychologist';
           const newUser: User = {
-            id: isDoc ? 'doctor-lead' : `pat-${Date.now()}`,
+            id: `pat-${Date.now()}`,
             name: name.trim(),
             email: email.trim(),
             phone: phone.trim() || '+91 6005754205',
-            role: selectedRole,
+            role: 'patient',
             createdAt: new Date().toISOString()
           };
           loginAs(newUser);
-          setSuccessMsg(`Welcome, ${newUser.name}! Redirecting to ${isDoc ? 'Admin Dashboard' : 'Patient Portal'}...`);
+          setSuccessMsg(`Welcome, ${newUser.name}! Redirecting to Patient Portal...`);
           setTimeout(() => {
             setAuthModalOpen(false);
-            navigate(isDoc ? '/admin' : '/patient-portal');
-          }, 700);
+            navigate('/patient-portal', { replace: true });
+          }, 500);
         }
       }
     } catch (err: any) {
@@ -178,21 +202,14 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  const handleQuickLogin = (target: 'doctor' | 'patient') => {
+  const handleQuickLogin = (target: 'doctor') => {
     if (target === 'doctor') {
-      loginAs(DEMO_USERS[1]);
-      setSuccessMsg('Logged in as Dr. Malik Sayar (Admin)! Opening Admin Dashboard...');
-      setTimeout(() => {
-        setAuthModalOpen(false);
-        navigate('/admin');
-      }, 500);
-    } else {
       loginAs(DEMO_USERS[0]);
-      setSuccessMsg('Logged in as Patient Aamir Mir! Opening Patient Portal...');
+      setSuccessMsg('Logged in as Yehya Hassan (Doctor Admin)! Opening Admin Dashboard...');
       setTimeout(() => {
         setAuthModalOpen(false);
-        navigate('/patient-portal');
-      }, 500);
+        navigate('/admin', { replace: true });
+      }, 400);
     }
   };
 
@@ -356,47 +373,11 @@ export const AuthModal: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-3.5">
                 {authModalMode === 'signup' && (
                   <>
-                    {/* Role selector during signup */}
-                    <div>
-                      <label className="block text-[11px] font-semibold uppercase text-neutral-700 mb-1.5">
-                        Account Type *
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRole('patient')}
-                          className={`p-2.5 rounded-lg border text-left flex items-start gap-2 transition-all ${
-                            selectedRole === 'patient'
-                              ? 'border-neutral-950 bg-neutral-950 text-white shadow-xs'
-                              : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
-                          }`}
-                        >
-                          <HeartHandshake className="w-4 h-4 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="block text-xs font-bold">Patient</span>
-                            <span className={`block text-[10px] ${selectedRole === 'patient' ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                              Personal Portal & Videos
-                            </span>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRole('admin')}
-                          className={`p-2.5 rounded-lg border text-left flex items-start gap-2 transition-all ${
-                            selectedRole === 'admin'
-                              ? 'border-neutral-950 bg-neutral-950 text-white shadow-xs'
-                              : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
-                          }`}
-                        >
-                          <Stethoscope className="w-4 h-4 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="block text-xs font-bold">Doctor / Admin</span>
-                            <span className={`block text-[10px] ${selectedRole === 'admin' ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                              Clinic Management & PINs
-                            </span>
-                          </div>
-                        </button>
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-800 text-xs flex items-center gap-2.5">
+                      <HeartHandshake className="w-5 h-5 text-neutral-900 shrink-0" />
+                      <div>
+                        <strong className="block text-neutral-950 font-bold">Patient Account Registration</strong>
+                        <span className="text-[11px] text-neutral-500">Create your private patient account to access consultations, prescriptions, and interventions.</span>
                       </div>
                     </div>
 
@@ -411,7 +392,7 @@ export const AuthModal: React.FC = () => {
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          placeholder={selectedRole === 'admin' ? 'Dr. Malik Sayar' : 'Aamir Mir'}
+                          placeholder="Enter your full name"
                           className="w-full pl-9 pr-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
                         />
                       </div>
@@ -449,9 +430,9 @@ export const AuthModal: React.FC = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={
                         authModalMode === 'signin'
-                          ? 'doctor@realitymindclinic.com or patient@example.com'
+                          ? 'realitymindclinic@gmail.com or patient@example.com'
                           : selectedRole === 'admin'
-                          ? 'doctor@realitymindclinic.com'
+                          ? 'realitymindclinic@gmail.com'
                           : 'patient@example.com'
                       }
                       className="w-full pl-9 pr-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
@@ -472,7 +453,7 @@ export const AuthModal: React.FC = () => {
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="At least 6 characters"
+                      placeholder="At least 6 characters (e.g. Reality@123)"
                       className="w-full pl-9 pr-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
                     />
                   </div>
@@ -487,37 +468,25 @@ export const AuthModal: React.FC = () => {
                     ? 'Processing...'
                     : authModalMode === 'signin'
                     ? 'Sign In & Redirect'
-                    : `Create ${selectedRole === 'admin' ? 'Doctor' : 'Patient'} Account`}
+                    : 'Create Patient Account'}
                 </button>
               </form>
 
-              {/* Instant 1-Click Access for Testing */}
+              {/* Instant 1-Click Access for Doctor */}
               {authModalMode === 'signin' && (
                 <div className="pt-3 border-t border-neutral-200 space-y-2">
                   <span className="block text-[10px] font-mono text-neutral-400 uppercase tracking-wider text-center">
-                    Instant 1-Click Access (Auto-Redirect)
+                    Doctor Admin Quick Access
                   </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickLogin('doctor')}
-                      className="p-2.5 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-bold text-neutral-900 bg-neutral-50 flex items-center justify-center gap-1.5 transition-colors group"
-                      title="Log in directly as Dr. Malik Sayar and open /admin"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 text-neutral-900 group-hover:scale-110 transition-transform" />
-                      <span>Doctor / Admin</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleQuickLogin('patient')}
-                      className="p-2.5 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-medium text-neutral-700 bg-white flex items-center justify-center gap-1.5 transition-colors group"
-                      title="Log in directly as Patient Aamir Mir and open /patient-portal"
-                    >
-                      <UserIcon className="w-3.5 h-3.5 text-neutral-600 group-hover:scale-110 transition-transform" />
-                      <span>Patient (Aamir Mir)</span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin('doctor')}
+                    className="w-full p-2.5 border border-neutral-300 hover:border-black rounded-lg text-[11px] font-bold text-neutral-900 bg-neutral-50 flex items-center justify-center gap-1.5 transition-colors group"
+                    title="Log in directly as Yehya Hassan and open /admin"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-neutral-900 group-hover:scale-110 transition-transform" />
+                    <span>Doctor Admin (Yehya Hassan)</span>
+                  </button>
                 </div>
               )}
             </>

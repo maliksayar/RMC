@@ -50,10 +50,12 @@ interface AppContextType {
   appointments: Appointment[];
   bookAppointment: (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'status'>) => Appointment;
   updateAppointmentStatus: (id: string, status: Appointment['status']) => void;
+  deleteAppointment: (id: string) => void;
 
   // Articles
   articles: BlogArticle[];
   publishArticle: (article: Omit<BlogArticle, 'id' | 'publishedDate'>) => void;
+  deleteArticle: (id: string) => void;
 
   // Notifications
   notifications: SystemNotification[];
@@ -79,66 +81,139 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Dummy/static IDs to permanently purge so all appointments, videos, and articles are dynamic doctor uploads
+const DUMMY_APPOINTMENT_IDS = new Set(['APT-1082', 'APT-1083', 'APT-1084']);
+const DUMMY_VIDEO_IDS = new Set([
+  'diaphragmatic-breathing',
+  'grounding-54321',
+  'progressive-muscle-relaxation',
+  'cognitive-restructuring',
+  'erp-ocd',
+  'self-hypnosis-induction',
+  'edu-what-is-anxiety',
+  'edu-what-is-panic',
+  'edu-what-is-psychotherapy',
+  'edu-what-is-cbt',
+  'edu-what-is-hypnotherapy',
+  'edu-what-is-dissociation',
+  'edu-when-to-consider-help'
+]);
+const DUMMY_ARTICLE_IDS = new Set([
+  'art-1',
+  'art-2',
+  'understanding-overthinking-cbt',
+  'science-of-clinical-hypnotherapy',
+  'restoring-sleep-cbt-insomnia'
+]);
+const DUMMY_PIN_IDS = new Set(['pin-1', 'pin-2', 'pin-3', 'pin-demo-1']);
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Current user & role
+  // Current user & role (defaults to null if unauthenticated)
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('rmc_current_user');
-    return saved ? JSON.parse(saved) : DEMO_USERS[0]; // defaults to Patient Aamir Mir
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (
+          parsed?.id === 'patient-demo-1' ||
+          parsed?.email === 'patient@realitymindclinic.com' ||
+          parsed?.name?.includes('Aamir Mir')
+        ) {
+          localStorage.removeItem('rmc_current_user');
+          return null;
+        }
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   });
 
   const isAdmin = isUserAdmin(currentUser);
   const role: UserRole = isAdmin ? 'admin' : (currentUser?.role || 'patient');
   const isSupabaseLive = isSupabaseConfigured;
 
-  // Interventions library
+  // Interventions library (Dynamic doctor uploads)
   const [interventions, setInterventions] = useState<InterventionVideo[]>(() => {
     const saved = localStorage.getItem('rmc_interventions');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        const hasEducational = parsed.some((v: any) => v.resourceKind === 'educational');
-        if (!hasEducational) {
-          const existingIds = new Set(parsed.map((v: any) => v.id));
-          const additions = INITIAL_INTERVENTIONS.filter((v) => !existingIds.has(v.id));
-          return [...parsed, ...additions];
-        }
-        return parsed;
+        const parsed: InterventionVideo[] = JSON.parse(saved);
+        return parsed.filter((v) => !DUMMY_VIDEO_IDS.has(v.id));
       } catch (e) {
-        return INITIAL_INTERVENTIONS;
+        return [];
       }
     }
-    return INITIAL_INTERVENTIONS;
+    return [];
   });
 
-  // PINs
+  // PINs (Dynamic doctor keys)
   const [pins, setPins] = useState<AccessPin[]>(() => {
     const saved = localStorage.getItem('rmc_pins');
-    return saved ? JSON.parse(saved) : INITIAL_PINS;
+    if (saved) {
+      try {
+        const parsed: AccessPin[] = JSON.parse(saved);
+        return parsed.filter((p) => !DUMMY_PIN_IDS.has(p.id));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   // Active unlocked PIN
   const [activeUnlockedPin, setActiveUnlockedPin] = useState<AccessPin | null>(() => {
     const saved = localStorage.getItem('rmc_active_pin');
-    return saved ? JSON.parse(saved) : INITIAL_PINS[0];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && !DUMMY_PIN_IDS.has(parsed.id)) return parsed;
+      } catch (e) {}
+    }
+    return null;
   });
 
   // Unlocked video IDs
   const [unlockedVideoIds, setUnlockedVideoIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('rmc_unlocked_videos');
-    if (saved) return JSON.parse(saved);
-    return INITIAL_PINS[0].assignedVideoIds;
+    if (saved) {
+      try {
+        const parsed: string[] = JSON.parse(saved);
+        return parsed.filter((id) => !DUMMY_VIDEO_IDS.has(id));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
-  // Appointments
+  // Appointments (Dynamic patient bookings & doctor roster)
   const [appointments, setAppointments] = useState<Appointment[]>(() => {
     const saved = localStorage.getItem('rmc_appointments');
-    return saved ? JSON.parse(saved) : INITIAL_APPOINTMENTS;
+    if (saved) {
+      try {
+        const parsed: Appointment[] = JSON.parse(saved);
+        return parsed.filter((apt) => !DUMMY_APPOINTMENT_IDS.has(apt.id));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
-  // Articles
+  // Articles (Dynamic doctor psychoeducation)
   const [articles, setArticles] = useState<BlogArticle[]>(() => {
     const saved = localStorage.getItem('rmc_articles');
-    return saved ? JSON.parse(saved) : INITIAL_ARTICLES;
+    if (saved) {
+      try {
+        const parsed: BlogArticle[] = JSON.parse(saved);
+        return parsed.filter((a) => !DUMMY_ARTICLE_IDS.has(a.id));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   // Notifications
@@ -219,25 +294,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           const profile = await dbService.getProfile(session.user.id);
-          const emailLower = (session.user.email || '').toLowerCase();
-          const isDoc = emailLower.includes('doctor') || emailLower.includes('admin') || emailLower.includes('clinic');
-          const resolvedRole: UserRole = profile?.role || (isDoc ? 'admin' : ((session.user.user_metadata?.role as UserRole) || 'patient'));
+          const emailLower = (session.user.email || '').toLowerCase().trim();
+          const fallbackRole: UserRole =
+            (session.user.user_metadata?.role as UserRole) ||
+            (emailLower === 'realitymindclinic@gmail.com' || emailLower === 'doctor@realitymindclinic.com'
+              ? 'admin'
+              : 'patient');
+          const resolvedRole: UserRole = profile?.role || fallbackRole;
 
-          const activeUser: User = profile || {
+          const activeUser: User = {
             id: session.user.id,
             email: session.user.email || '',
-            name: session.user.user_metadata?.name || (session.user.email ? session.user.email.split('@')[0] : 'User'),
-            phone: session.user.user_metadata?.phone || '',
+            name:
+              profile?.name ||
+              session.user.user_metadata?.name ||
+              (session.user.email ? session.user.email.split('@')[0] : 'User'),
+            phone: profile?.phone || session.user.user_metadata?.phone || '',
             role: resolvedRole,
-            createdAt: session.user.created_at || new Date().toISOString(),
-            unlockedVideoIds: []
+            avatar: profile?.avatar,
+            createdAt: profile?.createdAt || session.user.created_at || new Date().toISOString(),
+            unlockedVideoIds: profile?.unlockedVideoIds || []
           };
 
           setCurrentUser(activeUser);
+          localStorage.setItem('rmc_current_user', JSON.stringify(activeUser));
+
           if (activeUser.role === 'admin' || activeUser.role === 'psychologist') {
             setUnlockedVideoIds(interventions.map((v) => v.id));
           } else if (activeUser.unlockedVideoIds && activeUser.unlockedVideoIds.length > 0) {
             setUnlockedVideoIds(activeUser.unlockedVideoIds);
+          }
+        } else {
+          // If Supabase is live and no session, ensure stale user is wiped
+          const saved = localStorage.getItem('rmc_current_user');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              // If it's a demo offline user, keep it, otherwise clean
+              if (!parsed.id?.startsWith('doctor-') && !parsed.id?.startsWith('patient-demo-')) {
+                setCurrentUser(null);
+                localStorage.removeItem('rmc_current_user');
+              }
+            } catch {
+              setCurrentUser(null);
+              localStorage.removeItem('rmc_current_user');
+            }
           }
         }
       } catch (err) {
@@ -247,29 +348,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     restoreSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const profile = await dbService.getProfile(session.user.id);
-        const emailLower = (session.user.email || '').toLowerCase();
-        const isDoc = emailLower.includes('doctor') || emailLower.includes('admin') || emailLower.includes('clinic');
-        const resolvedRole: UserRole = profile?.role || (isDoc ? 'admin' : ((session.user.user_metadata?.role as UserRole) || 'patient'));
+        const emailLower = (session.user.email || '').toLowerCase().trim();
+        const fallbackRole: UserRole =
+          (session.user.user_metadata?.role as UserRole) ||
+          (emailLower === 'realitymindclinic@gmail.com' || emailLower === 'doctor@realitymindclinic.com'
+            ? 'admin'
+            : 'patient');
+        const resolvedRole: UserRole = profile?.role || fallbackRole;
 
-        const activeUser: User = profile || {
+        const activeUser: User = {
           id: session.user.id,
           email: session.user.email || '',
-          name: session.user.user_metadata?.name || (session.user.email ? session.user.email.split('@')[0] : 'User'),
-          phone: session.user.user_metadata?.phone || '',
+          name:
+            profile?.name ||
+            session.user.user_metadata?.name ||
+            (session.user.email ? session.user.email.split('@')[0] : 'User'),
+          phone: profile?.phone || session.user.user_metadata?.phone || '',
           role: resolvedRole,
-          createdAt: session.user.created_at || new Date().toISOString(),
-          unlockedVideoIds: []
+          avatar: profile?.avatar,
+          createdAt: profile?.createdAt || session.user.created_at || new Date().toISOString(),
+          unlockedVideoIds: profile?.unlockedVideoIds || []
         };
 
         setCurrentUser(activeUser);
+        localStorage.setItem('rmc_current_user', JSON.stringify(activeUser));
+
         if (activeUser.role === 'admin' || activeUser.role === 'psychologist') {
           setUnlockedVideoIds(interventions.map((v) => v.id));
         } else if (activeUser.unlockedVideoIds && activeUser.unlockedVideoIds.length > 0) {
           setUnlockedVideoIds(activeUser.unlockedVideoIds);
         }
+      } else if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        localStorage.removeItem('rmc_current_user');
+        localStorage.removeItem('rmc_active_pin');
+        setUnlockedVideoIds([]);
       }
     });
 
@@ -284,17 +400,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dbService.getNotifications()
         ]);
 
-        if (dbInterventions && dbInterventions.length > 0) {
-          setInterventions(dbInterventions);
+        if (dbInterventions !== null) {
+          const cleanInterventions = dbInterventions.filter((v) => !DUMMY_VIDEO_IDS.has(v.id));
+          setInterventions(cleanInterventions);
         }
-        if (dbAppointments && dbAppointments.length > 0) {
-          setAppointments(dbAppointments);
+        if (dbAppointments !== null) {
+          const cleanAppointments = dbAppointments.filter((a) => !DUMMY_APPOINTMENT_IDS.has(a.id));
+          setAppointments((prev) => {
+            const serverIds = new Set(cleanAppointments.map((a) => a.id));
+            const localOnly = prev.filter((a) => !serverIds.has(a.id) && !DUMMY_APPOINTMENT_IDS.has(a.id));
+            return [...cleanAppointments, ...localOnly];
+          });
         }
-        if (dbPins && dbPins.length > 0) {
-          setPins(dbPins);
+        if (dbPins !== null) {
+          const cleanPins = dbPins.filter((p) => !DUMMY_PIN_IDS.has(p.id));
+          setPins(cleanPins);
         }
-        if (dbArticles && dbArticles.length > 0) {
-          setArticles(dbArticles);
+        if (dbArticles !== null) {
+          const cleanArticles = dbArticles.filter((a) => !DUMMY_ARTICLE_IDS.has(a.id));
+          setArticles(cleanArticles);
         }
         if (dbNotifications && dbNotifications.length > 0) {
           setNotifications(dbNotifications);
@@ -324,10 +448,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } else {
       if (newRole === 'admin' || newRole === 'psychologist') {
-        setCurrentUser(DEMO_USERS[1]);
-        setUnlockedVideoIds(interventions.map((v) => v.id));
-      } else {
         setCurrentUser(DEMO_USERS[0]);
+        setUnlockedVideoIds(interventions.map((v) => v.id));
       }
     }
   };
@@ -353,6 +475,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loginAs = (user: User) => {
     setCurrentUser(user);
+    localStorage.setItem('rmc_current_user', JSON.stringify(user));
     if (isUserAdmin(user)) {
       setUnlockedVideoIds(interventions.map((v) => v.id));
     } else if (user.unlockedVideoIds && user.unlockedVideoIds.length > 0) {
@@ -363,7 +486,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loginWithSupabase = async (
     email: string,
     pass: string
-  ): Promise<{ success: boolean; message?: string; role?: UserRole }> => {
+  ): Promise<{ success: boolean; message?: string; role?: UserRole; user?: User }> => {
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase credentials are not configured in .env yet.' };
     }
@@ -371,21 +494,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await authService.signIn(email, pass);
       if (res?.user) {
         const profile = await dbService.getProfile(res.user.id);
-        const emailLower = (res.user.email || email).toLowerCase();
-        const isDoc = emailLower.includes('doctor') || emailLower.includes('admin') || emailLower.includes('clinic');
-        const resolvedRole: UserRole = profile?.role || (isDoc ? 'admin' : ((res.user.user_metadata?.role as UserRole) || 'patient'));
+        const emailLower = (res.user.email || email).toLowerCase().trim();
+        const fallbackRole: UserRole =
+          (res.user.user_metadata?.role as UserRole) ||
+          (emailLower === 'realitymindclinic@gmail.com' || emailLower === 'doctor@realitymindclinic.com'
+            ? 'admin'
+            : 'patient');
+        const resolvedRole: UserRole = profile?.role || fallbackRole;
 
-        const resolvedUser: User = profile || {
+        const resolvedUser: User = {
           id: res.user.id,
           email: res.user.email || email,
-          name: res.user.user_metadata?.name || email.split('@')[0],
-          phone: res.user.user_metadata?.phone || '',
+          name:
+            profile?.name ||
+            res.user.user_metadata?.name ||
+            (res.user.email ? res.user.email.split('@')[0] : 'User'),
+          phone: profile?.phone || res.user.user_metadata?.phone || '',
           role: resolvedRole,
-          createdAt: res.user.created_at || new Date().toISOString(),
-          unlockedVideoIds: []
+          avatar: profile?.avatar,
+          createdAt: profile?.createdAt || res.user.created_at || new Date().toISOString(),
+          unlockedVideoIds: profile?.unlockedVideoIds || []
         };
 
         setCurrentUser(resolvedUser);
+        localStorage.setItem('rmc_current_user', JSON.stringify(resolvedUser));
 
         if (resolvedUser.role === 'admin' || resolvedUser.role === 'psychologist') {
           setUnlockedVideoIds(interventions.map((v) => v.id));
@@ -393,7 +525,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setUnlockedVideoIds(resolvedUser.unlockedVideoIds);
         }
 
-        return { success: true, role: resolvedUser.role };
+        return { success: true, role: resolvedUser.role, user: resolvedUser };
       }
       return { success: false, message: 'Could not log in with given credentials.' };
     } catch (err: any) {
@@ -403,17 +535,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const signUpWithSupabase = async (
     data: SignUpData
-  ): Promise<{ success: boolean; message?: string; role?: UserRole; autoLoggedIn?: boolean }> => {
+  ): Promise<{ success: boolean; message?: string; role?: UserRole; autoLoggedIn?: boolean; user?: User }> => {
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase credentials are not configured in .env yet.' };
     }
     try {
-      const res = await authService.signUp(data);
-      if (res?.user) {
-        const emailLower = data.email.toLowerCase();
-        const isDoc = data.role === 'admin' || data.role === 'psychologist' || emailLower.includes('doctor') || emailLower.includes('admin');
-        const finalRole: UserRole = isDoc ? 'admin' : (data.role || 'patient');
+      const emailLower = data.email.toLowerCase().trim();
+      const isDoc =
+        emailLower === 'realitymindclinic@gmail.com' ||
+        emailLower === 'doctor@realitymindclinic.com';
+      const finalRole: UserRole = isDoc ? 'admin' : 'patient';
 
+      const res = await authService.signUp({
+        ...data,
+        role: finalRole
+      });
+
+      if (res?.user) {
         const newUser: User = {
           id: res.user.id,
           email: data.email,
@@ -426,13 +564,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (res.session) {
           setCurrentUser(newUser);
-          if (finalRole === 'admin' || finalRole === 'psychologist') {
+          localStorage.setItem('rmc_current_user', JSON.stringify(newUser));
+          if (finalRole === 'admin') {
             setUnlockedVideoIds(interventions.map((v) => v.id));
           }
           return {
             success: true,
             autoLoggedIn: true,
             role: finalRole,
+            user: newUser,
             message: `Account created successfully as ${finalRole === 'admin' ? 'Doctor / Admin' : 'Patient'}!`
           };
         }
@@ -459,6 +599,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
     setCurrentUser(null);
+    localStorage.removeItem('rmc_current_user');
+    localStorage.removeItem('rmc_active_pin');
     setUnlockedVideoIds([]);
     setActiveUnlockedPin(null);
   };
@@ -576,22 +718,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setAppointments((prev) => [newApt, ...prev]);
 
-    // Send notification
+    // Send notification to patient & doctor
     const notif: SystemNotification = {
       id: `notif-${Date.now()}`,
       userId: newApt.patientId,
       title: 'Appointment Confirmed',
-      message: `Your ${newApt.service} (${newApt.type === 'offline' ? 'In-Clinic at Tak Mohalla Road' : 'Online Call'}) on ${newApt.date} at ${newApt.timeSlot} is booked.`,
+      message: `Your ${newApt.service} (${newApt.type === 'offline' ? 'In-Clinic at Tak Mohalla Road' : 'Online Call'}) on ${newApt.date} at ${newApt.timeSlot} is confirmed with Yehya Hassan.`,
       date: 'Just now',
       read: false,
       type: 'appointment'
     };
-    setNotifications((prev) => [notif, ...prev]);
+
+    const adminNotif: SystemNotification = {
+      id: `notif-doc-${Date.now()}`,
+      userId: '32d5ebbd-476a-4199-b9fe-4c2410ffa230',
+      title: 'New Patient Booking',
+      message: `New booking: ${newApt.patientName} (${newApt.patientPhone}) for ${newApt.date} at ${newApt.timeSlot}.`,
+      date: 'Just now',
+      read: false,
+      type: 'appointment'
+    };
+
+    setNotifications((prev) => [adminNotif, notif, ...prev]);
 
     // Sync to Supabase DB
     if (isSupabaseConfigured) {
       dbService.createAppointment(newApt).catch(console.warn);
       dbService.createNotification(notif).catch(console.warn);
+      dbService.createNotification(adminNotif).catch(console.warn);
     }
 
     return newApt;
@@ -604,6 +758,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (isSupabaseConfigured) {
       dbService.updateAppointmentStatus(id, status).catch(console.warn);
+    }
+  };
+
+  const deleteAppointment = (id: string) => {
+    setAppointments((prev) => prev.filter((apt) => apt.id !== id));
+    if (isSupabaseConfigured) {
+      dbService.deleteAppointment(id).catch(console.warn);
     }
   };
 
@@ -653,6 +814,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (isSupabaseConfigured) {
       dbService.createArticle(newArticle).catch(console.warn);
+    }
+  };
+
+  const deleteArticle = (id: string) => {
+    setArticles((prev) => prev.filter((art) => art.id !== id));
+    if (isSupabaseConfigured) {
+      dbService.deleteArticle(id).catch(console.warn);
     }
   };
 
@@ -714,8 +882,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         appointments,
         bookAppointment,
         updateAppointmentStatus,
+        deleteAppointment,
         articles,
         publishArticle,
+        deleteArticle,
         notifications,
         markNotificationAsRead,
         clearNotifications,

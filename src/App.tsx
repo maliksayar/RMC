@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
@@ -21,6 +21,15 @@ import { InterventionPlayerModal } from './components/InterventionPlayerModal';
 import { ArticleModal } from './components/ArticleModal';
 import { AuthModal } from './components/AuthModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
+
+// Dynamic role-based router for generic /portal or /dashboard paths
+const RolePortalRedirect: React.FC = () => {
+  const { currentUser, isAdmin } = useApp();
+  if (!currentUser) {
+    return <Navigate to="/" replace />;
+  }
+  return <Navigate to={isAdmin ? '/admin' : '/patient-portal'} replace />;
+};
 
 // Auto-scroll to top on route change
 const ScrollToTop: React.FC = () => {
@@ -81,6 +90,8 @@ export const AppContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/portal" element={<RolePortalRedirect />} />
+          <Route path="/dashboard" element={<RolePortalRedirect />} />
           {/* Catch-all fallback */}
           <Route path="*" element={<HomePage />} />
         </Routes>

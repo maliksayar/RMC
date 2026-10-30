@@ -64,45 +64,57 @@ export const ArticlesPage: React.FC = () => {
       </div>
 
       {/* Articles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {filtered.map((art) => (
-          <div
-            key={art.id}
-            onClick={() => setActiveArticle(art)}
-            className="border border-neutral-200 bg-white rounded-lg overflow-hidden hover:border-black transition-all cursor-pointer flex flex-col justify-between group shadow-2xs"
-          >
-            <div>
-              <div className="aspect-16/10 overflow-hidden bg-neutral-900">
-                <img
-                  src={art.coverImage}
-                  alt={art.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
-                />
-              </div>
-
-              <div className="p-6 space-y-3">
-                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500">
-                  <span className="uppercase font-bold tracking-wider">{art.category}</span>
-                  <span>{art.readTime}</span>
+      {filtered.length === 0 ? (
+        <div className="bg-white border border-neutral-200 rounded-2xl p-12 text-center space-y-3 max-w-lg mx-auto shadow-xs">
+          <BookOpen className="w-10 h-10 text-neutral-400 mx-auto" />
+          <h3 className="font-garamond text-2xl font-bold text-neutral-900">
+            No Psychoeducational Articles Published Yet
+          </h3>
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            Clinical guidance and psychoeducational articles authored by Yehya Hassan will appear here once published from the clinic dashboard.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {filtered.map((art) => (
+            <div
+              key={art.id}
+              onClick={() => setActiveArticle(art)}
+              className="border border-neutral-200 bg-white rounded-lg overflow-hidden hover:border-black transition-all cursor-pointer flex flex-col justify-between group shadow-2xs"
+            >
+              <div>
+                <div className="aspect-16/10 overflow-hidden bg-neutral-900">
+                  <img
+                    src={art.coverImage}
+                    alt={art.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                  />
                 </div>
 
-                <h3 className="font-garamond text-2xl font-bold text-neutral-950 leading-snug group-hover:underline">
-                  {art.title}
-                </h3>
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500">
+                    <span className="uppercase font-bold tracking-wider">{art.category}</span>
+                    <span>{art.readTime}</span>
+                  </div>
 
-                <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
-                  {art.summary}
-                </p>
+                  <h3 className="font-garamond text-2xl font-bold text-neutral-950 leading-snug group-hover:underline">
+                    {art.title}
+                  </h3>
+
+                  <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
+                    {art.summary}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 pt-0 flex items-center justify-between text-xs text-neutral-900 font-semibold border-t border-neutral-100 mt-4">
+                <span>Read Full Article</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
-
-            <div className="p-6 pt-0 flex items-center justify-between text-xs text-neutral-900 font-semibold border-t border-neutral-100 mt-4">
-              <span>Read Full Article</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

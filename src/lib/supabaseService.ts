@@ -109,7 +109,7 @@ export const dbService = {
         patient_phone: apt.patientPhone,
         patient_email: apt.patientEmail,
         service: apt.service,
-        treatment_area: apt.treatmentArea,
+        treatment_area: apt.treatmentArea || null,
         type: apt.type,
         date: apt.date,
         time_slot: apt.timeSlot,
@@ -136,6 +136,21 @@ export const dbService = {
       return !error;
     } catch (e) {
       console.warn('Supabase updateAppointmentStatus error:', e);
+      return false;
+    }
+  },
+
+  async deleteAppointment(id: string): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      return !error;
+    } catch (e) {
+      console.warn('Supabase deleteAppointment error:', e);
       return false;
     }
   },
@@ -220,7 +235,7 @@ export const dbService = {
         .select('*')
         .order('created_at', { ascending: true });
 
-      if (error || !data || data.length === 0) return null;
+      if (error || !data) return null;
 
       return data.map((item) => ({
         id: item.id,
@@ -337,7 +352,7 @@ export const dbService = {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) return null;
+      if (error || !data) return null;
 
       return data.map((item) => ({
         id: item.id,
@@ -378,6 +393,21 @@ export const dbService = {
       return !error;
     } catch (e) {
       console.warn('Supabase createArticle error:', e);
+      return false;
+    }
+  },
+
+  async deleteArticle(id: string): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const { error } = await supabase
+        .from('articles')
+        .delete()
+        .eq('id', id);
+
+      return !error;
+    } catch (e) {
+      console.warn('Supabase deleteArticle error:', e);
       return false;
     }
   },

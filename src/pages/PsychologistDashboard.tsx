@@ -34,17 +34,16 @@ export const PsychologistDashboard: React.FC = () => {
     addIntervention,
     deleteIntervention,
     articles,
-    publishArticle
+    publishArticle,
+    deleteArticle,
+    deleteAppointment
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'appointments' | 'pins' | 'videos' | 'articles'>('pins');
 
   // PIN Generation state
   const [newPatientName, setNewPatientName] = useState('');
-  const [selectedVideos, setSelectedVideos] = useState<string[]>([
-    'cbt-basics',
-    'diaphragmatic-breathing'
-  ]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [expiryDays, setExpiryDays] = useState(30);
   const [pinNotes, setPinNotes] = useState('');
   const [generatedPinNotice, setGeneratedPinNotice] = useState<AccessPin | null>(null);
@@ -506,97 +505,115 @@ export const PsychologistDashboard: React.FC = () => {
           </div>
 
           <div className="divide-y divide-neutral-200">
-            {appointments.map((apt) => (
-              <div
-                key={apt.id}
-                className="py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-neutral-500">
-                      {apt.id}
-                    </span>
-                    <h4 className="font-garamond text-lg font-bold text-neutral-950">
-                      {apt.patientName}
-                    </h4>
-                    <span
-                      className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                        apt.type === 'offline'
-                          ? 'bg-neutral-900 text-white'
-                          : 'bg-neutral-100 text-neutral-900 border border-neutral-300'
-                      }`}
-                    >
-                      {apt.type === 'offline' ? 'In-Clinic (Bijbehara)' : 'Online Video'}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                        apt.status === 'confirmed'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : apt.status === 'pending'
-                          ? 'bg-amber-100 text-amber-800'
-                          : apt.status === 'completed'
-                          ? 'bg-neutral-200 text-neutral-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {apt.status}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-neutral-700">
-                    <strong className="text-neutral-900">{apt.service}</strong> · Concern:{' '}
-                    <strong className="text-neutral-900">{apt.treatmentArea}</strong>
-                  </p>
-
-                  <div className="text-xs text-neutral-500 flex flex-wrap gap-4 pt-0.5">
-                    <span>
-                      📅 <strong>{apt.date}</strong> at {apt.timeSlot}
-                    </span>
-                    <span>📞 {apt.patientPhone}</span>
-                    <span>✉️ {apt.patientEmail}</span>
-                  </div>
-
-                  {apt.notes && (
-                    <p className="text-[11px] text-neutral-600 italic bg-neutral-50 p-2 rounded border border-neutral-100 mt-1">
-                      Patient note: "{apt.notes}"
-                    </p>
-                  )}
-                </div>
-
-                {/* Status action buttons */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {apt.status !== 'confirmed' && (
-                    <button
-                      type="button"
-                      onClick={() => updateAppointmentStatus(apt.id, 'confirmed')}
-                      className="px-3 py-1.5 bg-neutral-900 text-white rounded text-xs font-semibold hover:bg-neutral-800"
-                    >
-                      Confirm
-                    </button>
-                  )}
-
-                  {apt.status !== 'completed' && (
-                    <button
-                      type="button"
-                      onClick={() => updateAppointmentStatus(apt.id, 'completed')}
-                      className="px-3 py-1.5 border border-neutral-300 rounded text-xs font-semibold hover:bg-neutral-100"
-                    >
-                      Mark Done
-                    </button>
-                  )}
-
-                  {apt.status !== 'cancelled' && (
-                    <button
-                      type="button"
-                      onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
-                      className="px-3 py-1.5 border border-neutral-300 text-neutral-600 rounded text-xs font-semibold hover:text-rose-600 hover:border-rose-300"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
+            {appointments.length === 0 ? (
+              <div className="p-8 text-center text-xs text-neutral-500">
+                No scheduled consultations currently on record. Real patient bookings will appear here automatically.
               </div>
-            ))}
+            ) : (
+              appointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className="py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-neutral-500">
+                        {apt.id}
+                      </span>
+                      <h4 className="font-garamond text-lg font-bold text-neutral-950">
+                        {apt.patientName}
+                      </h4>
+                      <span
+                        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                          apt.type === 'offline'
+                            ? 'bg-neutral-900 text-white'
+                            : 'bg-neutral-100 text-neutral-900 border border-neutral-300'
+                        }`}
+                      >
+                        {apt.type === 'offline' ? 'In-Clinic (Bijbehara)' : 'Online Video'}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                          apt.status === 'confirmed'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : apt.status === 'pending'
+                            ? 'bg-amber-100 text-amber-800'
+                            : apt.status === 'completed'
+                            ? 'bg-neutral-200 text-neutral-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {apt.status}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-neutral-700">
+                      <strong className="text-neutral-900">{apt.service}</strong>
+                    </p>
+
+                    <div className="text-xs text-neutral-500 flex flex-wrap gap-4 pt-0.5">
+                      <span>
+                        📅 <strong>{apt.date}</strong> at {apt.timeSlot}
+                      </span>
+                      <span>📞 {apt.patientPhone}</span>
+                      <span>✉️ {apt.patientEmail}</span>
+                    </div>
+
+                    {apt.notes && (
+                      <p className="text-[11px] text-neutral-600 italic bg-neutral-50 p-2 rounded border border-neutral-100 mt-1">
+                        Patient note: "{apt.notes}"
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Status action buttons */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {apt.status !== 'confirmed' && (
+                      <button
+                        type="button"
+                        onClick={() => updateAppointmentStatus(apt.id, 'confirmed')}
+                        className="px-3 py-1.5 bg-neutral-900 text-white rounded text-xs font-semibold hover:bg-neutral-800"
+                      >
+                        Confirm
+                      </button>
+                    )}
+
+                    {apt.status !== 'completed' && (
+                      <button
+                        type="button"
+                        onClick={() => updateAppointmentStatus(apt.id, 'completed')}
+                        className="px-3 py-1.5 border border-neutral-300 rounded text-xs font-semibold hover:bg-neutral-100"
+                      >
+                        Mark Done
+                      </button>
+                    )}
+
+                    {apt.status !== 'cancelled' && (
+                      <button
+                        type="button"
+                        onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                        className="px-3 py-1.5 border border-neutral-300 text-neutral-600 rounded text-xs font-semibold hover:text-rose-600 hover:border-rose-300"
+                      >
+                        Cancel
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete appointment for ${apt.patientName}?`)) {
+                          deleteAppointment(apt.id);
+                        }
+                      }}
+                      className="p-1.5 border border-neutral-300 text-neutral-400 hover:text-rose-600 rounded hover:border-rose-300"
+                      title="Delete Appointment"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -625,39 +642,45 @@ export const PsychologistDashboard: React.FC = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {interventions.map((video) => (
-                <div
-                  key={video.id}
-                  className="border border-neutral-200 rounded-lg p-4 space-y-3 bg-neutral-50/40 relative"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded font-bold">
-                      {video.category}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => deleteIntervention(video.id)}
-                      className="text-neutral-400 hover:text-rose-600"
-                      title="Delete Video"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+            {interventions.length === 0 ? (
+              <div className="p-10 text-center text-xs text-neutral-500 border border-dashed border-neutral-200 rounded-lg space-y-2">
+                <p className="font-semibold text-neutral-800">No videos in practice repository yet.</p>
+                <p>Upload your clinical intervention sessions or guided exercises using the button above.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {interventions.map((video) => (
+                  <div
+                    key={video.id}
+                    className="border border-neutral-200 rounded-lg p-4 space-y-3 bg-neutral-50/40 relative"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded font-bold">
+                        {video.category}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => deleteIntervention(video.id)}
+                        className="text-neutral-400 hover:text-rose-600"
+                        title="Delete Video"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
 
-                  <h4 className="font-garamond text-lg font-bold text-neutral-950">
-                    {video.title}
-                  </h4>
-                  <p className="text-xs text-neutral-600 line-clamp-2">
-                    {video.description}
-                  </p>
-                  <div className="pt-2 text-[10px] font-mono text-neutral-500 flex justify-between border-t border-neutral-200">
-                    <span>{video.duration}</span>
-                    <span>Target: {video.treatmentArea}</span>
+                    <h4 className="font-garamond text-lg font-bold text-neutral-950">
+                      {video.title}
+                    </h4>
+                    <p className="text-xs text-neutral-600 line-clamp-2">
+                      {video.description}
+                    </p>
+                    <div className="text-[11px] font-mono text-neutral-400 pt-1">
+                      Duration: {video.duration}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -686,32 +709,53 @@ export const PsychologistDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {articles.map((art) => (
-              <div
-                key={art.id}
-                className="border border-neutral-200 rounded-lg p-5 flex flex-col sm:flex-row items-start justify-between gap-4 hover:border-black transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="font-bold uppercase tracking-wider text-neutral-500 text-[10px]">
-                      {art.category}
-                    </span>
-                    <span>·</span>
-                    <span className="text-neutral-400">{art.publishedDate}</span>
-                  </div>
-                  <h4 className="font-garamond text-xl font-bold text-neutral-950">
-                    {art.title}
-                  </h4>
-                  <p className="text-xs text-neutral-600 line-clamp-2 max-w-2xl">
-                    {art.summary}
-                  </p>
-                </div>
-
-                <div className="text-xs font-mono text-neutral-500 shrink-0">
-                  {art.readTime}
-                </div>
+            {articles.length === 0 ? (
+              <div className="p-10 text-center text-xs text-neutral-500 border border-dashed border-neutral-200 rounded-lg space-y-2">
+                <p className="font-semibold text-neutral-800">No psychoeducational articles published yet.</p>
+                <p>Use "Write Article" above to create and publish patient guides.</p>
               </div>
-            ))}
+            ) : (
+              articles.map((art) => (
+                <div
+                  key={art.id}
+                  className="border border-neutral-200 rounded-lg p-5 flex flex-col sm:flex-row items-start justify-between gap-4 hover:border-black transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-bold uppercase tracking-wider text-neutral-500 text-[10px]">
+                        {art.category}
+                      </span>
+                      <span>·</span>
+                      <span className="text-neutral-400">{art.publishedDate}</span>
+                    </div>
+                    <h4 className="font-garamond text-xl font-bold text-neutral-950">
+                      {art.title}
+                    </h4>
+                    <p className="text-xs text-neutral-600 line-clamp-2 max-w-2xl">
+                      {art.summary}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs font-mono text-neutral-500">
+                      {art.readTime}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete article "${art.title}"?`)) {
+                          deleteArticle(art.id);
+                        }
+                      }}
+                      className="text-neutral-400 hover:text-rose-600 p-1"
+                      title="Delete Article"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

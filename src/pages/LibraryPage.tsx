@@ -192,9 +192,20 @@ export const LibraryPage: React.FC = () => {
       </div>
 
       {/* Interventions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVideos.map((video, index) => {
-          const isUnlocked = unlockedVideoIds.includes(video.id);
+      {filteredVideos.length === 0 ? (
+        <div className="bg-white border border-neutral-200 rounded-2xl p-12 text-center space-y-3 max-w-lg mx-auto shadow-xs">
+          <Activity className="w-10 h-10 text-neutral-400 mx-auto" />
+          <h3 className="font-garamond text-2xl font-bold text-neutral-900">
+            No Clinical Videos Uploaded Yet
+          </h3>
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            Clinical guided intervention practices and psychoeducational sessions uploaded by Yehya Hassan will appear here for patient access.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredVideos.map((video, index) => {
+            const isUnlocked = unlockedVideoIds.includes(video.id);
 
           return (
             <div
@@ -303,8 +314,10 @@ export const LibraryPage: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       {/* Bottom Summary Table from Synopsis Page 4 */}
+      {interventions.length > 0 && (
       <div className="border border-neutral-200 bg-white rounded-xl p-6 sm:p-8 space-y-6">
         <div className="space-y-1">
           <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">
@@ -360,6 +373,7 @@ export const LibraryPage: React.FC = () => {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };

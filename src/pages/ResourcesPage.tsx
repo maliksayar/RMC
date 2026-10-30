@@ -334,10 +334,15 @@ export const ResourcesPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {interventionVideos.map((video) => {
-              const unlocked = isVideoUnlocked(video);
-              const isDetailsExpanded = expandedDetailsId === video.id;
+          {interventionVideos.length === 0 ? (
+            <div className="bg-white border border-neutral-200 rounded-xl p-10 text-center text-xs text-neutral-500 shadow-2xs">
+              No therapeutic intervention sessions uploaded yet. Prescribed exercises uploaded by Yehya Hassan will appear here.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {interventionVideos.map((video) => {
+                const unlocked = isVideoUnlocked(video);
+                const isDetailsExpanded = expandedDetailsId === video.id;
 
               return (
                 <div
@@ -537,11 +542,12 @@ export const ResourcesPage: React.FC = () => {
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
@@ -567,8 +573,13 @@ export const ResourcesPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {educationalVideos.map((video) => (
+          {educationalVideos.length === 0 ? (
+            <div className="bg-white border border-neutral-200 rounded-xl p-10 text-center text-xs text-neutral-500 shadow-2xs">
+              No educational videos uploaded yet. Educational and concept videos uploaded by the clinic will appear here.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {educationalVideos.map((video) => (
               <div
                 key={video.id}
                 className="border border-neutral-200 bg-white rounded-xl overflow-hidden flex flex-col justify-between hover:border-neutral-400 transition-all group shadow-2xs"
@@ -657,7 +668,8 @@ export const ResourcesPage: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </section>
       )}
 

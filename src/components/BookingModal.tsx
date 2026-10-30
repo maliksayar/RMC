@@ -23,7 +23,6 @@ export const BookingModal: React.FC = () => {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [appointmentType, setAppointmentType] = useState<'offline' | 'online'>('offline');
   const [service, setService] = useState<ClinicService>('Psychotherapy');
-  const [treatmentArea, setTreatmentArea] = useState<TreatmentArea>('Anxiety');
   const [date, setDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 2);
@@ -61,7 +60,6 @@ export const BookingModal: React.FC = () => {
       patientPhone: phone,
       patientEmail: email || 'patient@realitymind.com',
       service,
-      treatmentArea,
       type: appointmentType,
       date,
       timeSlot,

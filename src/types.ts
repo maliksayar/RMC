@@ -5,22 +5,23 @@ export const isUserAdmin = (roleOrUser?: UserRole | User | null): boolean => {
   if (typeof roleOrUser === 'string') {
     return roleOrUser === 'admin' || roleOrUser === 'psychologist';
   }
-  if (roleOrUser.role === 'admin' || roleOrUser.role === 'psychologist') return true;
-  const name = (roleOrUser.name || '').toLowerCase();
-  const email = (roleOrUser.email || '').toLowerCase();
-  return (
-    name.includes('msdr') ||
-    name.includes('doctor') ||
-    name.includes('malik') ||
-    name.includes('sayar') ||
-    name.includes('admin') ||
-    email.includes('msdr') ||
-    email.includes('doctor') ||
-    email.includes('malik') ||
-    email.includes('sayar') ||
-    email.includes('admin') ||
-    email.includes('clinic')
-  );
+  const email = (roleOrUser.email || '').toLowerCase().trim();
+  // Strictly Yehya Hassan is the sole Doctor & Admin
+  if (email === 'realitymindclinic@gmail.com' || email === 'doctor@realitymindclinic.com') {
+    return true;
+  }
+  // Exclude previous doctor email
+  if (email === 'maliksyr98@gmail.com') {
+    return false;
+  }
+  // Explicit role
+  if (roleOrUser.role === 'patient') {
+    return false;
+  }
+  if (roleOrUser.role === 'admin' || roleOrUser.role === 'psychologist') {
+    return true;
+  }
+  return false;
 };
 
 export interface User {
@@ -95,7 +96,7 @@ export interface Appointment {
   patientPhone: string;
   patientEmail: string;
   service: ClinicService;
-  treatmentArea: TreatmentArea;
+  treatmentArea?: TreatmentArea;
   type: 'online' | 'offline'; // 'offline' = In-clinic at Bijbehara
   date: string;
   timeSlot: string;

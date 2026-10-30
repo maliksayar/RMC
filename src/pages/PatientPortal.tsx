@@ -264,7 +264,7 @@ export const PatientPortal: React.FC = () => {
                 Welcome back, {currentUser?.name || 'Patient'}
               </h1>
               <p className="text-xs text-neutral-600 font-sans mt-0.5">
-                Reality Mind Clinic · Tak Mohalla Road, Bijbehara · Supervised by Dr. Malik Sayar
+                Reality Mind Clinic · Tak Mohalla Road, Bijbehara · Supervised by Yehya Hassan
               </p>
             </div>
           </div>
@@ -453,7 +453,7 @@ export const PatientPortal: React.FC = () => {
                 </span>
               </div>
               <h3 className="font-serif text-xl sm:text-2xl font-bold">
-                Have an Access PIN from Dr. Malik Sayar?
+                Have an Access PIN from Yehya Hassan?
               </h3>
               <p className="text-xs text-neutral-400 leading-relaxed">
                 Enter your unique clinical access code to instantly unlock therapeutic guided interventions, breathing exercises, and homework materials assigned during your consultation.
@@ -548,7 +548,7 @@ export const PatientPortal: React.FC = () => {
                 </h3>
                 <p className="text-xs text-neutral-500 max-w-md mx-auto">
                   {prescribedVideos.length === 0
-                    ? 'Enter the PIN code issued by Dr. Malik Sayar during your consultation to unlock your personalized Category A therapeutic interventions.'
+                    ? 'Enter the PIN code issued by Yehya Hassan during your consultation to unlock your personalized Category A therapeutic interventions.'
                     : 'Try adjusting your category filter or search keywords.'}
                 </p>
               </div>
@@ -918,7 +918,7 @@ export const PatientPortal: React.FC = () => {
                 My Clinical Journal Entries ({records.length})
               </h4>
               <span className="text-xs text-neutral-500">
-                Discuss these in your next consultation with Dr. Malik
+                Discuss these in your next consultation with Yehya Hassan
               </span>
             </div>
 
@@ -1031,9 +1031,6 @@ export const PatientPortal: React.FC = () => {
                         <span className="text-[11px] font-mono text-neutral-400">ID: {apt.id}</span>
                       </div>
                       <h4 className="font-serif text-lg font-bold text-neutral-950">{apt.service}</h4>
-                      <p className="text-xs text-neutral-600">
-                        Focus Area: <strong>{apt.treatmentArea}</strong>
-                      </p>
                       <p className="text-xs text-neutral-500">
                         📅 <strong>{apt.date}</strong> at {apt.timeSlot} ·{' '}
                         {apt.type === 'offline' ? 'In-Clinic at Tak Mohalla Rd, Bijbehara' : 'Online Video Session'}
@@ -1076,14 +1073,14 @@ export const PatientPortal: React.FC = () => {
           <div className="bg-white border border-neutral-200 rounded-2xl p-7 shadow-xs space-y-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-neutral-950 text-white font-serif text-2xl font-bold flex items-center justify-center shrink-0">
-                MS
+                YH
               </div>
               <div>
                 <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded font-bold">
                   Clinical Lead & Psychologist
                 </span>
                 <h3 className="font-serif text-2xl font-bold text-neutral-950 mt-1">
-                  Dr. Malik Sayar
+                  Yehya Hassan
                 </h3>
                 <p className="text-xs text-neutral-500">
                   Consultant Psychologist & Clinical Hypnotherapist
@@ -1092,7 +1089,7 @@ export const PatientPortal: React.FC = () => {
             </div>
 
             <p className="text-xs text-neutral-600 leading-relaxed pt-2 border-t border-neutral-100">
-              Dr. Malik Sayar oversees all patient therapy programs, clinical intervention assignments, and psychological consultations at Reality Mind Clinic, focusing on evidence-based CBT, Hypnotherapy, and emotional wellbeing.
+              Yehya Hassan oversees all patient therapy programs, clinical intervention assignments, and psychological consultations at Reality Mind Clinic, focusing on evidence-based CBT, Hypnotherapy, and emotional wellbeing.
             </p>
 
             <div className="space-y-2 pt-2 text-xs">
@@ -1141,7 +1138,7 @@ export const PatientPortal: React.FC = () => {
               <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1">
                 <strong className="text-neutral-900 font-semibold block">Need a PIN Code?</strong>
                 <p className="text-neutral-500">
-                  If you need new videos or your previous PIN has expired, contact Dr. Malik or request an updated prescription code during your consultation.
+                  If you need new videos or your previous PIN has expired, contact Yehya Hassan or request an updated prescription code during your consultation.
                 </p>
               </div>
               <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1">
@@ -1166,7 +1163,7 @@ export const PatientPortal: React.FC = () => {
                 Clinical Articles & Guides ({articles.length})
               </h3>
               <p className="text-xs text-neutral-500">
-                Authoritative mental health guides written by Dr. Malik Sayar to support your therapeutic journey.
+                Authoritative mental health guides written by Yehya Hassan to support your therapeutic journey.
               </p>
             </div>
             <Link

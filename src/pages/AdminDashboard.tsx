@@ -50,6 +50,7 @@ export const AdminDashboard: React.FC = () => {
     appointments,
     updateAppointmentStatus,
     bookAppointment,
+    deleteAppointment,
     pins,
     generatePin,
     revokePin,
@@ -59,6 +60,7 @@ export const AdminDashboard: React.FC = () => {
     updateIntervention,
     articles,
     publishArticle,
+    deleteArticle,
     notifications,
     broadcastNotification,
     isSupabaseLive,
@@ -69,18 +71,18 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'pins' | 'videos' | 'articles' | 'broadcast' | 'profile'>('overview');
 
   // Doctor & Clinic Profile State
-  const [docName, setDocName] = useState(currentUser?.name || 'Dr. Malik Sayar');
+  const [docName, setDocName] = useState(currentUser?.name || 'Yehya Hassan');
   const [docPhone, setDocPhone] = useState(currentUser?.phone || '+91 6005754205');
-  const [docEmail, setDocEmail] = useState(currentUser?.email || 'doctor@realitymindclinic.com');
+  const [docEmail, setDocEmail] = useState(currentUser?.email || 'realitymindclinic@gmail.com');
   const [clinicAddress, setClinicAddress] = useState('Tak Mohalla Road, Bijbehara, Anantnag, J&K — 192124');
   const [clinicHours, setClinicHours] = useState('Mon - Sat: 10:00 AM - 6:00 PM');
   const [docProfileSaved, setDocProfileSaved] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
-      setDocName(currentUser.name || 'Dr. Malik Sayar');
+      setDocName(currentUser.name || 'Yehya Hassan');
       setDocPhone(currentUser.phone || '+91 6005754205');
-      setDocEmail(currentUser.email || 'doctor@realitymindclinic.com');
+      setDocEmail(currentUser.email || 'realitymindclinic@gmail.com');
     }
   }, [currentUser]);
 
@@ -103,10 +105,7 @@ export const AdminDashboard: React.FC = () => {
 
   // PIN Generation state
   const [newPatientName, setNewPatientName] = useState('');
-  const [selectedVideos, setSelectedVideos] = useState<string[]>([
-    'cbt-basics',
-    'diaphragmatic-breathing'
-  ]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [expiryDays, setExpiryDays] = useState(30);
   const [pinNotes, setPinNotes] = useState('');
   const [generatedPinNotice, setGeneratedPinNotice] = useState<AccessPin | null>(null);
@@ -286,7 +285,7 @@ export const AdminDashboard: React.FC = () => {
       subtitle: 'Clinical psychoeducational insights from Reality Mind Clinic.',
       category: newArticleCategory,
       readTime: '5 min read',
-      author: 'Dr. Malik Sayar (Lead Psychologist)',
+      author: 'Yehya Hassan (Lead Psychologist)',
       coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80',
       summary: newArticleSummary || 'Evidence-based insights into mental health and nervous system regulation.',
       sections: [
@@ -355,7 +354,7 @@ export const AdminDashboard: React.FC = () => {
       apt.patientName.toLowerCase().includes(aptSearch.toLowerCase()) ||
       apt.patientPhone.includes(aptSearch) ||
       apt.service.toLowerCase().includes(aptSearch.toLowerCase()) ||
-      apt.treatmentArea.toLowerCase().includes(aptSearch.toLowerCase());
+      (apt.treatmentArea || '').toLowerCase().includes(aptSearch.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -399,7 +398,7 @@ export const AdminDashboard: React.FC = () => {
               Clinical Administration & Patient Management
             </h1>
             <p className="text-xs text-neutral-400 mt-0.5">
-              Logged in as <strong>{currentUser?.name || 'Dr. Malik Sayar'}</strong> · Overseeing appointments, prescriptions, video interventions & psychoeducation.
+              Logged in as <strong>{currentUser?.name || 'Yehya Hassan'}</strong> · Overseeing appointments, prescriptions, video interventions & psychoeducation.
             </p>
           </div>
         </div>
@@ -671,13 +670,13 @@ export const AdminDashboard: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-[11px] text-neutral-500 mt-0.5">
-                        {apt.service} · {apt.treatmentArea} · <strong>{apt.date}</strong> at <strong>{apt.timeSlot}</strong>
+                        {apt.service ? `${apt.service} · ` : ''}<strong>{apt.date}</strong> at <strong>{apt.timeSlot}</strong>
                       </p>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <a
-                        href={`https://wa.me/${apt.patientPhone.replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(apt.patientName)},%20this%20is%20Dr.%20Malik%20Sayar%20from%20Reality%20Mind%20Clinic%20regarding%20your%20consultation.`}
+                        href={`https://wa.me/${apt.patientPhone.replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(apt.patientName)},%20this%20is%20Yehya%20Hassan%20from%20Reality%20Mind%20Clinic%20regarding%20your%20consultation.`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 rounded-md border border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition-colors"
@@ -805,7 +804,6 @@ export const AdminDashboard: React.FC = () => {
 
                       <div className="text-xs text-neutral-600 flex items-center gap-4 flex-wrap">
                         <span><strong>Service:</strong> {apt.service}</span>
-                        <span><strong>Focus Area:</strong> {apt.treatmentArea}</span>
                         <span><strong>Slot:</strong> {apt.date} at {apt.timeSlot}</span>
                       </div>
 
@@ -824,7 +822,7 @@ export const AdminDashboard: React.FC = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-2 flex-wrap shrink-0">
                       <a
-                        href={`https://wa.me/${apt.patientPhone.replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(apt.patientName)},%20this%20is%20Dr.%20Malik%20Sayar%20from%20Reality%20Mind%20Clinic.`}
+                        href={`https://wa.me/${apt.patientPhone.replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(apt.patientName)},%20this%20is%20Yehya%20Hassan%20from%20Reality%20Mind%20Clinic.`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-800 hover:bg-emerald-50 text-xs font-semibold flex items-center gap-1.5 transition-colors"
@@ -870,6 +868,19 @@ export const AdminDashboard: React.FC = () => {
                           Cancel
                         </button>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete appointment for ${apt.patientName}?`)) {
+                            deleteAppointment(apt.id);
+                          }
+                        }}
+                        className="p-1.5 border border-neutral-300 text-neutral-400 hover:text-red-600 hover:border-red-300 rounded-lg transition-colors"
+                        title="Delete Appointment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -997,31 +1008,44 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5 max-h-52 overflow-y-auto border border-neutral-200 rounded-lg p-2.5">
-                  {interventions.map((video) => {
-                    const isSelected = selectedVideos.includes(video.id);
-                    return (
-                      <div
-                        key={video.id}
-                        onClick={() => toggleVideoSelection(video.id)}
-                        className={`p-2 rounded text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-neutral-900 text-white font-medium'
-                            : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-800'
-                        }`}
+                  {interventions.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-neutral-500 bg-neutral-50 rounded-lg">
+                      <p>No videos uploaded to practice library yet.</p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('videos')}
+                        className="text-black font-semibold underline mt-1 inline-block"
                       >
-                        <div className="truncate pr-2">
-                          <span className="block truncate">{video.title}</span>
-                          <span className="text-[10px] opacity-75">{video.duration} · {video.category}</span>
+                        Upload videos in the Videos tab first
+                      </button>
+                    </div>
+                  ) : (
+                    interventions.map((video) => {
+                      const isSelected = selectedVideos.includes(video.id);
+                      return (
+                        <div
+                          key={video.id}
+                          onClick={() => toggleVideoSelection(video.id)}
+                          className={`p-2 rounded text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-neutral-900 text-white font-medium'
+                              : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-800'
+                          }`}
+                        >
+                          <div className="truncate pr-2">
+                            <span className="block truncate">{video.title}</span>
+                            <span className="text-[10px] opacity-75">{video.duration} · {video.category}</span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="rounded text-black shrink-0"
+                          />
                         </div>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}}
-                          className="rounded text-black shrink-0"
-                        />
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -1196,98 +1220,122 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Videos Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredInterventions.map((video) => (
-              <div
-                key={video.id}
-                className="bg-white rounded-xl border border-neutral-200 shadow-xs overflow-hidden flex flex-col justify-between hover:border-neutral-400 transition-colors"
+          {filteredInterventions.length === 0 ? (
+            <div className="bg-white rounded-2xl border-2 border-dashed border-neutral-200 p-12 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 bg-neutral-100 rounded-full flex items-center justify-center mx-auto text-neutral-500">
+                <Video className="w-6 h-6" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h3 className="font-serif text-lg font-bold text-neutral-950">
+                  No Videos in Practice Library Yet
+                </h3>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  As the Doctor, all videos here are dynamic uploads. Upload therapeutic practices, guided exercises, or psychoeducational videos to stream via Cloudinary.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddVideoModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 shadow-xs"
               >
-                <div>
-                  <div className="h-44 relative bg-neutral-900 group">
-                    <img
-                      src={video.thumbnailUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover opacity-80"
-                    />
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span>Upload First Video</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredInterventions.map((video) => (
+                <div
+                  key={video.id}
+                  className="bg-white rounded-xl border border-neutral-200 shadow-xs overflow-hidden flex flex-col justify-between hover:border-neutral-400 transition-colors"
+                >
+                  <div>
+                    <div className="h-44 relative bg-neutral-900 group">
+                      <img
+                        src={video.thumbnailUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover opacity-80"
+                      />
 
-                    {/* Overlay Badges */}
-                    <div className="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] font-mono uppercase bg-black/80 backdrop-blur-xs text-white px-2 py-0.5 rounded font-bold">
-                        {video.category}
+                      {/* Overlay Badges */}
+                      <div className="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-mono uppercase bg-black/80 backdrop-blur-xs text-white px-2 py-0.5 rounded font-bold">
+                          {video.category}
+                        </span>
+                        {video.isRestricted ? (
+                          <span className="text-[10px] font-mono uppercase bg-neutral-900 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" /> PIN Locked
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono uppercase bg-emerald-600 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1">
+                            <Unlock className="w-2.5 h-2.5" /> Public
+                          </span>
+                        )}
+                        {video.videoUrl && (
+                          <span className="text-[10px] font-mono uppercase bg-blue-600 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1">
+                            <Film className="w-2.5 h-2.5" /> Cloudinary Stream
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="absolute bottom-2.5 right-2.5 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded font-mono">
+                        {video.duration}
                       </span>
-                      {video.isRestricted ? (
-                        <span className="text-[10px] font-mono uppercase bg-neutral-900 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                          <Lock className="w-2.5 h-2.5" /> PIN Locked
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono uppercase bg-emerald-600 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                          <Unlock className="w-2.5 h-2.5" /> Public
-                        </span>
-                      )}
-                      {video.videoUrl && (
-                        <span className="text-[10px] font-mono uppercase bg-blue-600 text-white px-2 py-0.5 rounded font-bold flex items-center gap-1">
-                          <Film className="w-2.5 h-2.5" /> Cloudinary Stream
-                        </span>
-                      )}
+
+                      {/* Quick Preview Hover Button */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setActiveVideo(video)}
+                          className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full shadow-lg flex items-center gap-1.5 hover:scale-105 transition-transform"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-black" />
+                          <span>Preview Session</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <span className="absolute bottom-2.5 right-2.5 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded font-mono">
-                      {video.duration}
-                    </span>
+                    <div className="p-4 space-y-2">
+                      <h3 className="font-serif text-base font-bold text-neutral-950 leading-snug">
+                        {video.title}
+                      </h3>
+                      <p className="text-xs text-neutral-600 line-clamp-2">
+                        {video.description}
+                      </p>
+                      {video.clinicalRationale && (
+                        <p className="text-[11px] text-neutral-500 italic line-clamp-1">
+                          Rationale: {video.clinicalRationale}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                    {/* Quick Preview Hover Button */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="p-4 pt-0 border-t border-neutral-100 flex items-center justify-between">
+                    <span className="text-[10px] text-neutral-400 font-mono">
+                      ID: {video.id}
+                    </span>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setActiveVideo(video)}
-                        className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full shadow-lg flex items-center gap-1.5 hover:scale-105 transition-transform"
+                        onClick={() => updateIntervention(video.id, { isRestricted: !video.isRestricted })}
+                        className="text-xs font-semibold text-neutral-700 hover:text-black underline"
                       >
-                        <Play className="w-3.5 h-3.5 fill-black" />
-                        <span>Preview Session</span>
+                        {video.isRestricted ? 'Make Public' : 'Require PIN'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteIntervention(video.id)}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title="Delete Intervention"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-
-                  <div className="p-4 space-y-2">
-                    <h3 className="font-serif text-base font-bold text-neutral-950 leading-snug">
-                      {video.title}
-                    </h3>
-                    <p className="text-xs text-neutral-600 line-clamp-2">
-                      {video.description}
-                    </p>
-                    {video.clinicalRationale && (
-                      <p className="text-[11px] text-neutral-500 italic line-clamp-1">
-                        Rationale: {video.clinicalRationale}
-                      </p>
-                    )}
-                  </div>
                 </div>
-
-                <div className="p-4 pt-0 border-t border-neutral-100 flex items-center justify-between">
-                  <span className="text-[10px] text-neutral-400 font-mono">
-                    ID: {video.id}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => updateIntervention(video.id, { isRestricted: !video.isRestricted })}
-                      className="text-xs font-semibold text-neutral-700 hover:text-black underline"
-                    >
-                      {video.isRestricted ? 'Make Public' : 'Require PIN'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteIntervention(video.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      title="Delete Intervention"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1316,32 +1364,70 @@ export const AdminDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {articles.map((article) => (
-              <div
-                key={article.id}
-                className="bg-white rounded-xl border border-neutral-200 shadow-xs p-5 flex flex-col justify-between space-y-4 hover:border-neutral-400 transition-colors"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-neutral-500">
-                    <span className="font-mono uppercase font-bold text-neutral-800">{article.category}</span>
-                    <span>{article.publishedDate} · {article.readTime}</span>
-                  </div>
-                  <h3 className="font-serif text-lg font-bold text-neutral-950">
-                    {article.title}
-                  </h3>
-                  <p className="text-xs text-neutral-600 leading-relaxed">
-                    {article.summary}
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-                  <span>Author: {article.author}</span>
-                  <span className="text-[10px] font-mono">ID: {article.id}</span>
-                </div>
+          {articles.length === 0 ? (
+            <div className="bg-white rounded-2xl border-2 border-dashed border-neutral-200 p-12 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 bg-neutral-100 rounded-full flex items-center justify-center mx-auto text-neutral-500">
+                <FileText className="w-6 h-6" />
               </div>
-            ))}
-          </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h3 className="font-serif text-lg font-bold text-neutral-950">
+                  No Articles Published Yet
+                </h3>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Articles are dynamic doctor publications. Use "+ Write Article" to author clinical psychoeducational guides for your patients.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddArticleModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Write First Article</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {articles.map((article) => (
+                <div
+                  key={article.id}
+                  className="bg-white rounded-xl border border-neutral-200 shadow-xs p-5 flex flex-col justify-between space-y-4 hover:border-neutral-400 transition-colors"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-neutral-500">
+                      <span className="font-mono uppercase font-bold text-neutral-800">{article.category}</span>
+                      <span>{article.publishedDate} · {article.readTime}</span>
+                    </div>
+                    <h3 className="font-serif text-lg font-bold text-neutral-950">
+                      {article.title}
+                    </h3>
+                    <p className="text-xs text-neutral-600 leading-relaxed">
+                      {article.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+                    <span>Author: {article.author}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono">ID: {article.id}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Delete article "${article.title}"?`)) {
+                            deleteArticle(article.id);
+                          }
+                        }}
+                        className="text-neutral-400 hover:text-red-600 p-1"
+                        title="Delete Article"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1393,7 +1479,7 @@ export const AdminDashboard: React.FC = () => {
                   rows={4}
                   value={broadcastMsg}
                   onChange={(e) => setBroadcastMsg(e.target.value)}
-                  placeholder="e.g. Please be advised that Dr. Malik Sayar will conduct in-clinic consultations at Tak Mohalla Road from 10:00 AM."
+                  placeholder="e.g. Please be advised that Yehya Hassan will conduct in-clinic consultations at Tak Mohalla Road from 10:00 AM."
                   className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black"
                 />
               </div>
@@ -1533,7 +1619,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-neutral-600 space-y-1">
               <div className="flex items-center justify-between text-[11px]">
                 <span>Admin Authority:</span>
-                <span className="font-bold text-neutral-900">Dr. Malik Sayar (Full Administrative Rights)</span>
+                <span className="font-bold text-neutral-900">Yehya Hassan (Full Administrative Rights)</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span>Portal Permissions:</span>
