@@ -255,7 +255,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('rmc_current_user', JSON.stringify(currentUser));
+    if (currentUser) {
+      localStorage.setItem('rmc_current_user', JSON.stringify(currentUser));
+    }
   }, [currentUser]);
 
   useEffect(() => {
@@ -325,19 +327,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setUnlockedVideoIds(activeUser.unlockedVideoIds);
           }
         } else {
-          // If Supabase is live and no session, ensure stale user is wiped
+          // If Supabase has no active session, restore whatever authenticated user is cached in localStorage
           const saved = localStorage.getItem('rmc_current_user');
           if (saved) {
             try {
-              const parsed = JSON.parse(saved);
-              // If it's a demo offline user, keep it, otherwise clean
-              if (!parsed.id?.startsWith('doctor-') && !parsed.id?.startsWith('patient-demo-')) {
-                setCurrentUser(null);
-                localStorage.removeItem('rmc_current_user');
+              const parsed: User = JSON.parse(saved);
+              if (parsed && parsed.email) {
+                setCurrentUser(parsed);
+                if (isUserAdmin(parsed)) {
+                  setUnlockedVideoIds(interventions.map((v) => v.id));
+                } else if (parsed.unlockedVideoIds && parsed.unlockedVideoIds.length > 0) {
+                  setUnlockedVideoIds(parsed.unlockedVideoIds);
+                }
               }
-            } catch {
-              setCurrentUser(null);
-              localStorage.removeItem('rmc_current_user');
+            } catch (e) {
+              console.warn('Could not restore cached session:', e);
             }
           }
         }
@@ -382,6 +386,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setUnlockedVideoIds(activeUser.unlockedVideoIds);
         }
       } else if (event === 'SIGNED_OUT') {
+        // If explicit sign out event, check if current user is an active direct/offline admin
+        const saved = localStorage.getItem('rmc_current_user');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            const emailLower = (parsed?.email || '').toLowerCase().trim();
+            if (emailLower === 'realitymindclinic@gmail.com' || emailLower === 'doctor@realitymindclinic.com') {
+              return;
+            }
+          } catch {}
+        }
         setCurrentUser(null);
         localStorage.removeItem('rmc_current_user');
         localStorage.removeItem('rmc_active_pin');
