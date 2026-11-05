@@ -114,12 +114,8 @@ export const AdminDashboard: React.FC = () => {
   // New Video State
   const [showAddVideoModal, setShowAddVideoModal] = useState(false);
   const [newVideoTitle, setNewVideoTitle] = useState('');
-  const [newVideoAssignedFor, setNewVideoAssignedFor] = useState('');
-  const [newVideoCategory, setNewVideoCategory] = useState<'CBT' | 'Mindfulness & Relaxation' | 'Behavioral' | 'Hypnotherapy'>('CBT');
-  const [newVideoTreatmentArea, setNewVideoTreatmentArea] = useState<TreatmentArea>('Anxiety');
   const [newVideoDuration, setNewVideoDuration] = useState('15 mins');
   const [newVideoDesc, setNewVideoDesc] = useState('');
-  const [newVideoRationale, setNewVideoRationale] = useState('');
   const [newVideoIsRestricted, setNewVideoIsRestricted] = useState(true);
   const [newVideoInteractiveType, setNewVideoInteractiveType] = useState<string>('breathing');
 
@@ -192,9 +188,7 @@ export const AdminDashboard: React.FC = () => {
   const resetVideoForm = () => {
     setShowAddVideoModal(false);
     setNewVideoTitle('');
-    setNewVideoAssignedFor('');
     setNewVideoDesc('');
-    setNewVideoRationale('');
     setNewVideoDuration('15 mins');
     setVideoFile(null);
     setVideoUploadProgress(0);
@@ -254,13 +248,10 @@ export const AdminDashboard: React.FC = () => {
 
     addIntervention({
       title: newVideoTitle,
-      typicallyAssignedFor: newVideoAssignedFor || 'Clinical prescribed regimen',
-      treatmentArea: newVideoTreatmentArea,
-      category: newVideoCategory,
-      duration: newVideoDuration,
+      duration: newVideoDuration || '15 mins',
       isRestricted: newVideoIsRestricted,
       description: newVideoDesc || 'Tailored clinical guidance video recorded at Reality Mind Clinic.',
-      clinicalRationale: newVideoRationale || 'Facilitates patient emotional recovery through systematic practice.',
+      category: 'Clinical Guidance',
       tags: ['Clinical Guidance', 'Bijbehara', finalVideoUrl ? 'Cloudinary Stream' : 'Interactive'],
       type: finalVideoUrl ? 'video' : 'interactive',
       videoUrl: finalVideoUrl,
@@ -1982,21 +1973,6 @@ export const AdminDashboard: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                    Therapy Category
-                  </label>
-                  <select
-                    value={newVideoCategory}
-                    onChange={(e) => setNewVideoCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
-                  >
-                    <option value="CBT">CBT</option>
-                    <option value="Mindfulness & Relaxation">Mindfulness & Relaxation</option>
-                    <option value="Behavioral">Behavioral</option>
-                    <option value="Hypnotherapy">Hypnotherapy</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
                     Duration
                   </label>
                   <input
@@ -2005,28 +1981,7 @@ export const AdminDashboard: React.FC = () => {
                     onChange={(e) => setNewVideoDuration(e.target.value)}
                     placeholder="15 mins"
                     className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
-                  >
-                  </input>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                    Clinical Focus Area
-                  </label>
-                  <select
-                    value={newVideoTreatmentArea}
-                    onChange={(e) => setNewVideoTreatmentArea(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
-                  >
-                    <option value="Anxiety">Anxiety</option>
-                    <option value="Depression">Depression</option>
-                    <option value="OCD">OCD</option>
-                    <option value="Overthinking">Overthinking</option>
-                    <option value="Fear & Phobias">Fear & Phobias</option>
-                    <option value="Sleep Problems">Sleep Problems</option>
-                  </select>
+                  />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
@@ -2045,39 +2000,13 @@ export const AdminDashboard: React.FC = () => {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                  Typically Prescribed For
-                </label>
-                <input
-                  type="text"
-                  value={newVideoAssignedFor}
-                  onChange={(e) => setNewVideoAssignedFor(e.target.value)}
-                  placeholder="e.g. Acute somatic anxiety, panic sensations, vagal tone regulation"
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
                   Description & Guidance
                 </label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={newVideoDesc}
                   onChange={(e) => setNewVideoDesc(e.target.value)}
                   placeholder="Clinical instructions for the patient when watching and practicing"
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                  Clinical Rationale (Why prescribed)
-                </label>
-                <input
-                  type="text"
-                  value={newVideoRationale}
-                  onChange={(e) => setNewVideoRationale(e.target.value)}
-                  placeholder="Stimulates parasympathetic vagal tone and downregulates panic"
                   className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
                 />
               </div>

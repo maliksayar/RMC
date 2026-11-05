@@ -51,15 +51,9 @@ export const ResourcesPage: React.FC = () => {
   const [modalResourceKind, setModalResourceKind] = useState<ResourceKind>('educational');
   const [modalIsRestricted, setModalIsRestricted] = useState(false);
   const [modalCategory, setModalCategory] = useState('Psychoeducation');
-  const [modalTreatmentArea, setModalTreatmentArea] = useState<TreatmentArea>('Anxiety');
   const [modalDuration, setModalDuration] = useState('6 mins');
   const [modalVideoUrl, setModalVideoUrl] = useState('');
   const [modalDescription, setModalDescription] = useState('');
-  const [modalWhatItIs, setModalWhatItIs] = useState('');
-  const [modalWhyUsed, setModalWhyUsed] = useState('');
-  const [modalHowToPerform, setModalHowToPerform] = useState('');
-  const [modalMistakes, setModalMistakes] = useState('');
-  const [modalWhenToPractise, setModalWhenToPractise] = useState('');
 
   // Expanded details for Category A cards
   const [expandedDetailsId, setExpandedDetailsId] = useState<string | null>(null);
@@ -107,18 +101,12 @@ export const ResourcesPage: React.FC = () => {
       resourceKind: modalResourceKind,
       isRestricted: modalResourceKind === 'educational' ? false : modalIsRestricted,
       category: modalCategory,
-      treatmentArea: modalTreatmentArea,
       duration: modalDuration || '8 mins',
       videoUrl: modalVideoUrl || undefined,
       thumbnailUrl: defaultThumbnail,
       description: modalDescription || 'Dynamic clinical resource uploaded by Reality Mind Clinic therapist.',
-      whatItIs: modalWhatItIs || undefined,
-      whyUsed: modalWhyUsed || undefined,
-      howToPerform: modalHowToPerform || undefined,
-      commonMistakes: modalMistakes || undefined,
-      howAndWhenToPractise: modalWhenToPractise || undefined,
       type: 'video',
-      typicallyAssignedFor: `${modalTreatmentArea} clinical management`
+      typicallyAssignedFor: 'Clinical practice and guidance'
     });
 
     // Reset and close
@@ -126,11 +114,6 @@ export const ResourcesPage: React.FC = () => {
     setModalTitle('');
     setModalDescription('');
     setModalVideoUrl('');
-    setModalWhatItIs('');
-    setModalWhyUsed('');
-    setModalHowToPerform('');
-    setModalMistakes('');
-    setModalWhenToPractise('');
     alert('Video successfully added to the dynamic clinic resources library!');
   };
 
@@ -406,7 +389,7 @@ export const ResourcesPage: React.FC = () => {
                     <div className="p-5 space-y-3">
                       <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500">
                         <span className="uppercase font-bold tracking-wider">{video.category}</span>
-                        <span>{video.treatmentArea}</span>
+                        {video.treatmentArea && <span>{video.treatmentArea}</span>}
                       </div>
 
                       <h3 className="font-garamond text-xl font-bold text-neutral-950 leading-snug">
@@ -787,34 +770,17 @@ export const ResourcesPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Duration & Treatment Area */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-neutral-800 mb-1">Duration *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 8 mins or 20 mins"
-                    value={modalDuration}
-                    onChange={(e) => setModalDuration(e.target.value)}
-                    className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-neutral-800 mb-1">Target Concern</label>
-                  <select
-                    value={modalTreatmentArea}
-                    onChange={(e) => setModalTreatmentArea(e.target.value as TreatmentArea)}
-                    className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                  >
-                    <option value="Anxiety">Anxiety</option>
-                    <option value="Depression">Depression</option>
-                    <option value="OCD">OCD</option>
-                    <option value="Overthinking">Overthinking</option>
-                    <option value="Fear & Phobias">Fear & Phobias</option>
-                    <option value="Sleep Problems">Sleep Problems</option>
-                  </select>
-                </div>
+              {/* Duration */}
+              <div>
+                <label className="block font-bold text-neutral-800 mb-1">Duration *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 8 mins or 20 mins"
+                  value={modalDuration}
+                  onChange={(e) => setModalDuration(e.target.value)}
+                  className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
+                />
               </div>
 
               {/* Video URL */}
@@ -845,71 +811,6 @@ export const ResourcesPage: React.FC = () => {
                   className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
                 />
               </div>
-
-              {/* Category A Specific Fields */}
-              {modalResourceKind === 'intervention' && (
-                <div className="space-y-3 pt-2 border-t border-neutral-200">
-                  <span className="font-bold text-neutral-900 block text-[11px] uppercase tracking-wider font-mono">
-                    Guidance Framework Details (Optional)
-                  </span>
-
-                  <div>
-                    <label className="block text-neutral-700 mb-0.5">What the intervention is:</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Diaphragmatic pacing technique..."
-                      value={modalWhatItIs}
-                      onChange={(e) => setModalWhatItIs(e.target.value)}
-                      className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-neutral-700 mb-0.5">Why it is being used:</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Downregulates autonomic nervous system..."
-                      value={modalWhyUsed}
-                      onChange={(e) => setModalWhyUsed(e.target.value)}
-                      className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-neutral-700 mb-0.5">How to perform it:</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 4s inhale, 4s hold, 6s exhale..."
-                      value={modalHowToPerform}
-                      onChange={(e) => setModalHowToPerform(e.target.value)}
-                      className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-neutral-700 mb-0.5">Common mistakes:</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Breathing with upper chest"
-                        value={modalMistakes}
-                        onChange={(e) => setModalMistakes(e.target.value)}
-                        className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-700 mb-0.5">When to practise:</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Twice daily for 10 mins"
-                        value={modalWhenToPractise}
-                        onChange={(e) => setModalWhenToPractise(e.target.value)}
-                        className="w-full p-2 border border-neutral-300 rounded text-xs bg-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Submit Buttons */}
               <div className="pt-3 flex items-center justify-end gap-2 border-t border-neutral-200">

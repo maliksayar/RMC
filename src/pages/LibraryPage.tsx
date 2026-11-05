@@ -269,10 +269,12 @@ export const LibraryPage: React.FC = () => {
                     {video.title}
                   </h3>
 
-                  <div className="p-2 bg-neutral-50 border border-neutral-100 rounded text-[11px]">
-                    <span className="font-semibold text-neutral-700">Typically Assigned For:</span>{' '}
-                    <span className="text-neutral-900 font-medium">{video.typicallyAssignedFor}</span>
-                  </div>
+                  {video.typicallyAssignedFor && (
+                    <div className="p-2 bg-neutral-50 border border-neutral-100 rounded text-[11px]">
+                      <span className="font-semibold text-neutral-700">Typically Assigned For:</span>{' '}
+                      <span className="text-neutral-900 font-medium">{video.typicallyAssignedFor}</span>
+                    </div>
+                  )}
 
                   <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
                     {video.description}

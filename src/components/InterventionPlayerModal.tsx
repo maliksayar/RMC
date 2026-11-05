@@ -99,12 +99,16 @@ export const InterventionPlayerModal: React.FC = () => {
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-mono tracking-widest bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded">
-                  {activeVideo.category}
-                </span>
-                <span className="text-[10px] text-neutral-400">
-                  Target: {activeVideo.typicallyAssignedFor}
-                </span>
+                {activeVideo.category && (
+                  <span className="text-[10px] uppercase font-mono tracking-widest bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded">
+                    {activeVideo.category}
+                  </span>
+                )}
+                {activeVideo.typicallyAssignedFor && (
+                  <span className="text-[10px] text-neutral-400">
+                    Target: {activeVideo.typicallyAssignedFor}
+                  </span>
+                )}
               </div>
               <h3 className="font-garamond text-xl sm:text-2xl font-bold text-white mt-0.5">
                 {activeVideo.title}
@@ -503,9 +507,11 @@ export const InterventionPlayerModal: React.FC = () => {
                   Therapeutic Description & Purpose
                 </h5>
                 <p className="text-neutral-700 leading-relaxed">{activeVideo.description}</p>
-                <div className="pt-1 text-[11px] text-neutral-500">
-                  <span className="font-semibold text-neutral-800">Clinical Rationale:</span> {activeVideo.clinicalRationale}
-                </div>
+                {activeVideo.clinicalRationale && (
+                  <div className="pt-1 text-[11px] text-neutral-500">
+                    <span className="font-semibold text-neutral-800">Clinical Rationale:</span> {activeVideo.clinicalRationale}
+                  </div>
+                )}
               </div>
             </div>
           )}
