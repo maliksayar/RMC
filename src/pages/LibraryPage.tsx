@@ -22,7 +22,9 @@ export const LibraryPage: React.FC = () => {
     unlockedVideoIds,
     activeUnlockedPin,
     setPinModalOpen,
-    setActiveVideo
+    setActiveVideo,
+    isAdmin,
+    role
   } = useApp();
 
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
@@ -205,7 +207,14 @@ export const LibraryPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredVideos.map((video, index) => {
-            const isUnlocked = unlockedVideoIds.includes(video.id);
+            const isPublic = video.isRestricted === false;
+            const isUnlocked =
+              isPublic ||
+              isAdmin ||
+              role === 'admin' ||
+              role === 'psychologist' ||
+              unlockedVideoIds.includes(video.id) ||
+              Boolean(activeUnlockedPin?.assignedVideoIds?.includes(video.id));
 
           return (
             <div
@@ -231,7 +240,12 @@ export const LibraryPage: React.FC = () => {
 
                   {/* Status Badge */}
                   <div className="absolute top-2.5 right-2.5">
-                    {isUnlocked ? (
+                    {isPublic ? (
+                      <span className="bg-emerald-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-xs">
+                        <Unlock className="w-2.5 h-2.5" />
+                        <span>Public Video</span>
+                      </span>
+                    ) : isUnlocked ? (
                       <span className="bg-emerald-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-xs">
                         <Unlock className="w-2.5 h-2.5" />
                         <span>Prescribed & Unlocked</span>
@@ -293,7 +307,7 @@ export const LibraryPage: React.FC = () => {
                       setPinModalOpen(true);
                     }
                   }}
-                  className={`w-full py-2.5 rounded text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                  className={`w-full py-2.5 rounded text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     isUnlocked
                       ? 'bg-black text-white hover:bg-neutral-800 shadow-xs'
                       : 'border border-neutral-300 text-neutral-800 hover:border-black hover:bg-neutral-50'
@@ -302,7 +316,7 @@ export const LibraryPage: React.FC = () => {
                   {isUnlocked ? (
                     <>
                       <Play className="w-3.5 h-3.5" />
-                      <span>Start Intervention</span>
+                      <span>{isPublic ? 'Watch Video' : 'Start Intervention'}</span>
                     </>
                   ) : (
                     <>

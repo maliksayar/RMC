@@ -1,8 +1,11 @@
 // Cloudinary Client Service for Reality Mind Clinic (RMC)
 // Handles direct client-to-Cloudinary uploads with real-time progress tracking
 
-const cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '').trim();
-const uploadPreset = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '').trim();
+const DEFAULT_CLOUD_NAME = 'l1tfuckc';
+const DEFAULT_UPLOAD_PRESET = 'rmc_unsigned_upload';
+
+const cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || DEFAULT_CLOUD_NAME).trim();
+const uploadPreset = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || DEFAULT_UPLOAD_PRESET).trim();
 
 export const isCloudinaryConfigured = Boolean(
   cloudName &&

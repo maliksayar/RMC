@@ -228,11 +228,13 @@ export const PatientPortal: React.FC = () => {
     (apt) => apt.patientId === currentUser?.id || apt.patientName === currentUser?.name
   );
 
-  const prescribedVideos = interventions.filter((v) =>
-    unlockedVideoIds.includes(v.id)
+  const unlockedVideos = interventions.filter((v) =>
+    v.isRestricted === false ||
+    unlockedVideoIds.includes(v.id) ||
+    Boolean(activeUnlockedPin?.assignedVideoIds?.includes(v.id))
   );
 
-  const filteredPrescribedVideos = prescribedVideos.filter((v) => {
+  const filteredPrescribedVideos = interventions.filter((v) => {
     const matchFilter = videoFilter === 'all' || v.category.toLowerCase().includes(videoFilter.toLowerCase());
     const matchSearch = videoSearch === '' ||
       v.title.toLowerCase().includes(videoSearch.toLowerCase()) ||
@@ -298,9 +300,9 @@ export const PatientPortal: React.FC = () => {
             </span>
             <div className="flex items-baseline gap-1.5 mt-1">
               <span className="text-2xl font-bold text-neutral-950 font-serif">
-                {prescribedVideos.length}
+                {unlockedVideos.length}
               </span>
-              <span className="text-xs text-emerald-700 font-medium">unlocked</span>
+              <span className="text-xs text-emerald-700 font-medium">accessible</span>
             </div>
           </div>
 
@@ -356,7 +358,7 @@ export const PatientPortal: React.FC = () => {
           }`}
         >
           <Play className="w-3.5 h-3.5" />
-          <span>My Prescribed Interventions ({prescribedVideos.length})</span>
+          <span>Interventions & Guidance ({interventions.length})</span>
         </button>
 
         <button
@@ -542,89 +544,136 @@ export const PatientPortal: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <h3 className="font-serif text-xl font-bold text-neutral-900">
-                  {prescribedVideos.length === 0
-                    ? 'No Clinical Interventions Unlocked Yet'
+                  {interventions.length === 0
+                    ? 'No Clinical Interventions Available Yet'
                     : 'No Interventions Match Your Search'}
                 </h3>
                 <p className="text-xs text-neutral-500 max-w-md mx-auto">
-                  {prescribedVideos.length === 0
-                    ? 'Enter the PIN code issued by Yehya Hassan during your consultation to unlock your personalized Category A therapeutic interventions.'
+                  {interventions.length === 0
+                    ? 'Videos uploaded dynamically by Yehya Hassan will appear here for practice.'
                     : 'Try adjusting your category filter or search keywords.'}
                 </p>
               </div>
-              {prescribedVideos.length === 0 && (
-                <button
-                  type="button"
-                  onClick={() => setPinModalOpen(true)}
-                  className="px-6 py-2.5 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 shadow-xs"
-                >
-                  Enter PIN Code
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setPinModalOpen(true)}
+                className="px-6 py-2.5 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 shadow-xs cursor-pointer"
+              >
+                Enter PIN Code
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPrescribedVideos.map((video) => (
-                <div
-                  key={video.id}
-                  className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* Thumbnail */}
-                    <div className="relative aspect-video bg-neutral-900 overflow-hidden">
-                      <img
-                        src={video.thumbnailUrl}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
-                      />
-                      <span className="absolute top-2.5 right-2.5 bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
-                        <Unlock className="w-2.5 h-2.5" />
-                        <span>Prescribed</span>
-                      </span>
-                      <span className="absolute bottom-2.5 left-2.5 text-[10px] font-mono text-white bg-black/75 px-2 py-0.5 rounded">
-                        {video.duration}
-                      </span>
-                    </div>
+              {filteredPrescribedVideos.map((video) => {
+                const isPublic = video.isRestricted === false;
+                const isUnlocked =
+                  isPublic ||
+                  unlockedVideoIds.includes(video.id) ||
+                  Boolean(activeUnlockedPin?.assignedVideoIds?.includes(video.id));
 
-                    {/* Content Details */}
-                    <div className="p-5 space-y-2">
-                      <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 uppercase">
-                        <span>{video.category}</span>
-                        {video.type && <span className="font-bold text-neutral-800">{video.type}</span>}
+                return (
+                  <div
+                    key={video.id}
+                    className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                  >
+                    <div>
+                      {/* Thumbnail */}
+                      <div className="relative aspect-video bg-neutral-900 overflow-hidden">
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                        />
+                        <span
+                          className={`absolute top-2.5 right-2.5 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs ${
+                            isPublic
+                              ? 'bg-emerald-600/95'
+                              : isUnlocked
+                              ? 'bg-emerald-700'
+                              : 'bg-black/80 backdrop-blur-xs'
+                          }`}
+                        >
+                          {isPublic ? (
+                            <>
+                              <Unlock className="w-2.5 h-2.5" />
+                              <span>Public Video</span>
+                            </>
+                          ) : isUnlocked ? (
+                            <>
+                              <Unlock className="w-2.5 h-2.5" />
+                              <span>Prescribed & Unlocked</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-2.5 h-2.5" />
+                              <span>Doctor PIN Required</span>
+                            </>
+                          )}
+                        </span>
+                        <span className="absolute bottom-2.5 left-2.5 text-[10px] font-mono text-white bg-black/75 px-2 py-0.5 rounded">
+                          {video.duration}
+                        </span>
                       </div>
 
-                      <h4 className="font-serif text-lg font-bold text-neutral-950 line-clamp-1 group-hover:text-emerald-800 transition-colors">
-                        {video.title}
-                      </h4>
-
-                      <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed">
-                        {video.description}
-                      </p>
-
-                      {video.clinicalRationale && (
-                        <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-100 text-[11px] text-neutral-600 space-y-0.5">
-                          <strong className="text-neutral-900 font-semibold block text-[10px] uppercase font-mono">
-                            Clinical Rationale:
-                          </strong>
-                          <p className="line-clamp-2 italic">{video.clinicalRationale}</p>
+                      {/* Content Details */}
+                      <div className="p-5 space-y-2">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 uppercase">
+                          <span>{video.category}</span>
+                          {video.type && <span className="font-bold text-neutral-800">{video.type}</span>}
                         </div>
-                      )}
+
+                        <h4 className="font-serif text-lg font-bold text-neutral-950 line-clamp-1 group-hover:text-emerald-800 transition-colors">
+                          {video.title}
+                        </h4>
+
+                        <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+                          {video.description}
+                        </p>
+
+                        {video.clinicalRationale && (
+                          <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-100 text-[11px] text-neutral-600 space-y-0.5">
+                            <strong className="text-neutral-900 font-semibold block text-[10px] uppercase font-mono">
+                              Clinical Rationale:
+                            </strong>
+                            <p className="line-clamp-2 italic">{video.clinicalRationale}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Launch button */}
+                    <div className="p-5 pt-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isUnlocked) {
+                            setActiveVideo(video);
+                          } else {
+                            setPinModalOpen(true);
+                          }
+                        }}
+                        className={`w-full py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer ${
+                          isUnlocked
+                            ? 'bg-neutral-950 text-white hover:bg-neutral-800'
+                            : 'border border-neutral-300 text-neutral-800 hover:border-black hover:bg-neutral-50'
+                        }`}
+                      >
+                        {isUnlocked ? (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                            <span>{isPublic ? 'Watch Video' : 'Start Practice Session'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>Enter PIN to Unlock</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  {/* Launch button */}
-                  <div className="p-5 pt-0">
-                    <button
-                      type="button"
-                      onClick={() => setActiveVideo(video)}
-                      className="w-full py-2.5 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors shadow-xs"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Start Practice Session</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -122,10 +122,12 @@ export const ResourcesPage: React.FC = () => {
     if (video.resourceKind === 'educational') return true;
     // If explicitly non-restricted, it's public (Category A public sample)
     if (video.isRestricted === false) return true;
-    // Psychologist role has master access
-    if (role === 'psychologist') return true;
-    // Check patient unlocked list
-    return unlockedVideoIds.includes(video.id);
+    // Doctor / Admin / Psychologist role has master access
+    if (isAdmin || role === 'admin' || role === 'psychologist') return true;
+    // Check patient unlocked list or active PIN
+    if (unlockedVideoIds.includes(video.id)) return true;
+    if (activeUnlockedPin?.assignedVideoIds?.includes(video.id)) return true;
+    return false;
   };
 
   return (

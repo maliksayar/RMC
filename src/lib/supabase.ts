@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const DEFAULT_SUPABASE_URL = 'https://leqqutfchhdadtkneoel.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_T8Q49-zw_ZVybVElzj3deg_VRxV7a0N';
+
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL).trim();
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY).trim();
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -10,20 +13,14 @@ export const isSupabaseConfigured = Boolean(
   !supabaseUrl.includes('your-project-id')
 );
 
-// Fallback dummy client if credentials have not been pasted yet
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
-  : createClient('https://rmc-placeholder.supabase.co', 'dummy-anon-key', {
-      auth: {
-        persistSession: false
-      }
-    });
+// Fallback client with production credentials guaranteed
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 export const getSupabaseConfig = () => ({
   isConfigured: isSupabaseConfigured,

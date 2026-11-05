@@ -233,24 +233,24 @@ export const dbService = {
       const { data, error } = await supabase
         .from('interventions')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error || !data) return null;
 
       return data.map((item) => ({
         id: item.id,
         title: item.title,
-        resourceKind: item.resource_kind,
-        isRestricted: item.is_restricted,
+        resourceKind: item.resource_kind || 'intervention',
+        isRestricted: item.is_restricted !== undefined ? item.is_restricted : false,
         typicallyAssignedFor: item.typically_assigned_for,
         treatmentArea: item.treatment_area,
-        category: item.category,
-        duration: item.duration,
-        description: item.description,
+        category: item.category || 'Clinical Guidance',
+        duration: item.duration || '10 mins',
+        description: item.description || '',
         clinicalRationale: item.clinical_rationale,
         tags: item.tags || [],
-        type: item.type,
-        thumbnailUrl: item.thumbnail_url,
+        type: item.type || 'video',
+        thumbnailUrl: item.thumbnail_url || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773',
         videoUrl: item.video_url,
         interactiveType: item.interactive_type,
         keySteps: item.key_steps || [],
@@ -271,23 +271,23 @@ export const dbService = {
   async createIntervention(video: InterventionVideo): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
     try {
-      const { error } = await supabase.from('interventions').insert({
+      const { error } = await supabase.from('interventions').upsert({
         id: video.id,
         title: video.title,
-        resource_kind: video.resourceKind,
-        is_restricted: video.isRestricted,
+        resource_kind: video.resourceKind || 'intervention',
+        is_restricted: video.isRestricted !== undefined ? Boolean(video.isRestricted) : false,
         typically_assigned_for: video.typicallyAssignedFor,
         treatment_area: video.treatmentArea,
-        category: video.category,
-        duration: video.duration,
-        description: video.description,
+        category: video.category || 'Clinical Guidance',
+        duration: video.duration || '10 mins',
+        description: video.description || '',
         clinical_rationale: video.clinicalRationale,
-        tags: video.tags,
-        type: video.type,
-        thumbnail_url: video.thumbnailUrl,
+        tags: video.tags || [],
+        type: video.type || 'video',
+        thumbnail_url: video.thumbnailUrl || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773',
         video_url: video.videoUrl,
         interactive_type: video.interactiveType,
-        key_steps: video.keySteps,
+        key_steps: video.keySteps || [],
         what_it_is: video.whatItIs,
         why_used: video.whyUsed,
         how_to_perform: video.howToPerform,
@@ -297,7 +297,12 @@ export const dbService = {
         how_and_when_to_practise: video.howAndWhenToPractise
       });
 
-      return !error;
+      if (error) {
+        console.error('Supabase createIntervention database error:', error);
+        return false;
+      }
+
+      return true;
     } catch (e) {
       console.warn('Supabase createIntervention error:', e);
       return false;

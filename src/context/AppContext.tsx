@@ -417,7 +417,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (dbInterventions !== null) {
           const cleanInterventions = dbInterventions.filter((v) => !DUMMY_VIDEO_IDS.has(v.id));
-          setInterventions(cleanInterventions);
+          const serverIdSet = new Set(cleanInterventions.map((v) => v.id));
+
+          // Rescue & sync any local videos in localStorage that are not on the server yet
+          const savedLocal = localStorage.getItem('rmc_interventions');
+          let localVideos: InterventionVideo[] = [];
+          if (savedLocal) {
+            try {
+              localVideos = JSON.parse(savedLocal);
+            } catch {}
+          }
+
+          const unsyncedLocal = localVideos.filter(
+            (v) => !serverIdSet.has(v.id) && !DUMMY_VIDEO_IDS.has(v.id) && v.title
+          );
+
+          // Push unsynced local videos from this device to Supabase so other devices receive them
+          if (unsyncedLocal.length > 0) {
+            unsyncedLocal.forEach((v) => {
+              dbService.createIntervention(v).catch(console.warn);
+            });
+          }
+
+          const merged = [...cleanInterventions, ...unsyncedLocal];
+          setInterventions(merged);
         }
         if (dbAppointments !== null) {
           const cleanAppointments = dbAppointments.filter((a) => !DUMMY_APPOINTMENT_IDS.has(a.id));
@@ -445,8 +468,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     loadSupabaseData();
 
+    // 3. Realtime subscription: sync videos dynamically across all devices
+    const channel = supabase
+      .channel('public:interventions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'interventions' },
+        async () => {
+          const fresh = await dbService.getInterventions();
+          if (fresh) {
+            setInterventions(fresh.filter((v) => !DUMMY_VIDEO_IDS.has(v.id)));
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       authListener?.subscription?.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -784,33 +823,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Interventions library management
-  const addIntervention = (videoData: Omit<InterventionVideo, 'id'>) => {
+  const addIntervention = async (videoData: Omit<InterventionVideo, 'id'>) => {
     const newVideo: InterventionVideo = {
       ...videoData,
       id: `video-${Date.now()}`
     };
-    setInterventions((prev) => [...prev, newVideo]);
+    setInterventions((prev) => [newVideo, ...prev.filter((v) => v.id !== newVideo.id)]);
 
     if (isSupabaseConfigured) {
-      dbService.createIntervention(newVideo).catch(console.warn);
+      await dbService.createIntervention(newVideo);
     }
   };
 
-  const updateIntervention = (id: string, updates: Partial<InterventionVideo>) => {
+  const updateIntervention = async (id: string, updates: Partial<InterventionVideo>) => {
     setInterventions((prev) =>
       prev.map((v) => (v.id === id ? { ...v, ...updates } : v))
     );
 
     if (isSupabaseConfigured) {
-      dbService.updateIntervention(id, updates).catch(console.warn);
+      await dbService.updateIntervention(id, updates);
     }
   };
 
-  const deleteIntervention = (id: string) => {
+  const deleteIntervention = async (id: string) => {
     setInterventions((prev) => prev.filter((v) => v.id !== id));
 
     if (isSupabaseConfigured) {
-      dbService.deleteIntervention(id).catch(console.warn);
+      await dbService.deleteIntervention(id);
     }
   };
 
