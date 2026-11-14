@@ -356,6 +356,7 @@ export const dbService = {
       const { data, error } = await supabase
         .from('articles')
         .select('*')
+        .neq('category', 'Words & Moments')
         .order('created_at', { ascending: false });
 
       if (error || !data) return null;
@@ -487,18 +488,37 @@ export const dbService = {
   async getMoments(): Promise<WordMoment[] | null> {
     if (!isSupabaseConfigured) return null;
     try {
+      // 1. Try dedicated moments table first
       const { data, error } = await supabase
         .from('moments')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error || !data) return null;
+      if (!error && data) {
+        return data.map((item) => ({
+          id: item.id,
+          imageUrl: item.image_url,
+          caption: item.caption,
+          date: item.date,
+          title: item.title,
+          createdAt: item.created_at
+        }));
+      }
 
-      return data.map((item) => ({
+      // 2. Seamless fallback to articles table if moments table is not yet migrated in Supabase
+      const { data: artData, error: artError } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('category', 'Words & Moments')
+        .order('created_at', { ascending: false });
+
+      if (artError || !artData) return null;
+
+      return artData.map((item) => ({
         id: item.id,
-        imageUrl: item.image_url,
-        caption: item.caption,
-        date: item.date,
+        imageUrl: item.cover_image,
+        caption: item.summary,
+        date: item.published_date,
         title: item.title,
         createdAt: item.created_at
       }));
@@ -511,6 +531,7 @@ export const dbService = {
   async createMoment(moment: WordMoment): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
     try {
+      // 1. Try dedicated moments table first
       const { error } = await supabase.from('moments').upsert({
         id: moment.id,
         image_url: moment.imageUrl,
@@ -520,8 +541,25 @@ export const dbService = {
         created_at: moment.createdAt || new Date().toISOString()
       });
 
-      if (error) {
-        console.error('Supabase createMoment error:', error);
+      if (!error) return true;
+
+      // 2. Seamless fallback to articles table if moments table is not yet created in Supabase
+      const { error: artError } = await supabase.from('articles').upsert({
+        id: moment.id,
+        title: moment.title || 'Client Artwork & Gratitude',
+        subtitle: moment.caption,
+        category: 'Words & Moments',
+        read_time: moment.date,
+        published_date: moment.date,
+        author: 'Yehya Hassan',
+        cover_image: moment.imageUrl,
+        summary: moment.caption,
+        sections: [],
+        key_takeaways: []
+      });
+
+      if (artError) {
+        console.error('Supabase fallback createMoment error:', artError);
         return false;
       }
       return true;
@@ -534,8 +572,9 @@ export const dbService = {
   async deleteMoment(id: string): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
     try {
-      const { error } = await supabase.from('moments').delete().eq('id', id);
-      return !error;
+      await supabase.from('moments').delete().eq('id', id);
+      const { error: artError } = await supabase.from('articles').delete().eq('id', id);
+      return !artError;
     } catch (e) {
       console.warn('Supabase deleteMoment error:', e);
       return false;

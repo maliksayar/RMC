@@ -484,8 +484,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const cleanArticles = dbArticles.filter((a) => !DUMMY_ARTICLE_IDS.has(a.id));
           setArticles(cleanArticles);
         }
-        if (dbMoments !== null && dbMoments.length > 0) {
-          setMoments(dbMoments);
+        if (dbMoments !== null) {
+          const serverMoments = dbMoments;
+          const serverIdSet = new Set(serverMoments.map((m) => m.id));
+
+          // Rescue & sync any local moments stored in localStorage that are not in Supabase yet
+          const savedLocal = localStorage.getItem('rmc_moments');
+          let localMoments: WordMoment[] = [];
+          if (savedLocal) {
+            try {
+              localMoments = JSON.parse(savedLocal);
+            } catch {}
+          }
+
+          const unsyncedLocal = localMoments.filter(
+            (m) => !serverIdSet.has(m.id) && m.imageUrl && m.caption
+          );
+
+          // Auto-push unsynced local moments from this device to Supabase so other devices receive them
+          if (unsyncedLocal.length > 0) {
+            unsyncedLocal.forEach((m) => {
+              dbService.createMoment(m).catch(console.warn);
+            });
+          }
+
+          const mergedMoments = [...serverMoments, ...unsyncedLocal];
+          if (mergedMoments.length > 0) {
+            setMoments(mergedMoments);
+          } else {
+            setMoments(INITIAL_MOMENTS);
+            INITIAL_MOMENTS.forEach((m) => dbService.createMoment(m).catch(console.warn));
+          }
         }
         if (dbNotifications && dbNotifications.length > 0) {
           setNotifications(dbNotifications);
@@ -512,12 +541,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
       .subscribe();
 
-    // 4. Realtime subscription: sync words & moments dynamically
+    // 4. Realtime subscription: sync words & moments dynamically across all devices
     const momentsChannel = supabase
-      .channel('public:moments')
+      .channel('public:moments_sync')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'moments' },
+        async () => {
+          const freshMoments = await dbService.getMoments();
+          if (freshMoments && freshMoments.length > 0) {
+            setMoments(freshMoments);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'articles' },
         async () => {
           const freshMoments = await dbService.getMoments();
           if (freshMoments && freshMoments.length > 0) {
