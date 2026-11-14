@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   KeyRound,
   Calendar,
@@ -6,18 +7,22 @@ import {
   MapPin,
   Clock,
   Maximize2,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ClinicLogo } from '../components/ClinicLogo';
+import { WordMoment } from '../types';
 
 export const HomePage: React.FC = () => {
   const {
     setPinModalOpen,
-    setBookingModalOpen
+    setBookingModalOpen,
+    moments,
+    isAdmin
   } = useApp();
 
-  const [galleryModalOpen, setGalleryModalOpen] = React.useState(false);
+  const [selectedMoment, setSelectedMoment] = useState<WordMoment | null>(null);
 
   const helpAreas = [
     {
@@ -432,57 +437,75 @@ export const HomePage: React.FC = () => {
       {/* SECTION 7: WORDS AND MOMENTS (PHOTO GALLERY) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="border border-neutral-200 bg-white p-8 sm:p-12 rounded-lg space-y-6">
-          <div className="border-b border-neutral-100 pb-5">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-              Section 7
-            </span>
-            <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950 mt-1">
-              Words and Moments
-            </h2>
-            <p className="text-xs sm:text-sm text-neutral-600 mt-2 font-sans">
-              A gallery of artwork, letters, and tokens of gratitude created and gifted by clients to therapist
-            </p>
+          <div className="border-b border-neutral-100 pb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+                Section 7
+              </span>
+              <h2 className="font-garamond text-3xl sm:text-4xl font-bold text-neutral-950 mt-1">
+                Words and Moments
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-600 mt-2 font-sans">
+                A gallery of artwork, letters, and tokens of gratitude created and gifted by clients to therapist
+              </p>
+            </div>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-black text-white text-xs font-medium rounded-md self-start sm:self-auto transition-colors shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Manage Moments (Admin)</span>
+              </Link>
+            )}
           </div>
 
           {/* Photo Gallery Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-            {/* Gallery Photo Item */}
-            <div className="flex flex-col">
-              <div
-                onClick={() => setGalleryModalOpen(true)}
-                className="group relative cursor-pointer rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 shadow-xs hover:shadow-md transition-all duration-300"
-              >
-                <div className="relative aspect-4/5 w-full overflow-hidden bg-neutral-900">
-                  <img
-                    src="/therapist/yehya-hassan-clinic.jpg"
-                    alt="Received on 30 August 2026"
-                    className="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-3 right-3 bg-black/60 text-white p-2 rounded-full opacity-80 group-hover:opacity-100 transition-opacity">
-                    <Maximize2 className="w-3.5 h-3.5" />
+            {moments && moments.length > 0 ? (
+              moments.map((moment) => (
+                <div key={moment.id} className="flex flex-col group">
+                  <div
+                    onClick={() => setSelectedMoment(moment)}
+                    className="group relative cursor-pointer rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 shadow-xs hover:shadow-md transition-all duration-300"
+                  >
+                    <div className="relative aspect-4/5 w-full overflow-hidden bg-neutral-900">
+                      <img
+                        src={moment.imageUrl}
+                        alt={moment.title || moment.date}
+                        className="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-3 right-3 bg-black/60 text-white p-2 rounded-full opacity-80 group-hover:opacity-100 transition-opacity">
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Note and date below the image */}
+                  <div className="pt-3.5 space-y-1 text-center sm:text-left">
+                    <p className="text-xs sm:text-[13px] text-neutral-700 italic leading-relaxed font-sans line-clamp-3">
+                      “{moment.caption}”
+                    </p>
+                    <span className="text-[11px] font-medium text-neutral-400 block font-mono">
+                      {moment.date}
+                    </span>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-neutral-400 text-sm">
+                No moments published yet.
               </div>
-
-              {/* Note and date below the image */}
-              <div className="pt-3.5 space-y-1 text-center sm:text-left">
-                <p className="text-xs sm:text-[13px] text-neutral-700 italic leading-relaxed font-sans">
-                  “Today, I received this beautiful piece of art from my client. It means a lot to me. Thank you, dear.”
-                </p>
-                <span className="text-[11px] font-medium text-neutral-400 block font-mono">
-                  30 August 2026
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* GALLERY PHOTO LIGHTBOX MODAL */}
-      {galleryModalOpen && (
+      {selectedMoment && (
         <div
-          onClick={() => setGalleryModalOpen(false)}
+          onClick={() => setSelectedMoment(null)}
           className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
         >
           <div
@@ -491,27 +514,27 @@ export const HomePage: React.FC = () => {
           >
             <button
               type="button"
-              onClick={() => setGalleryModalOpen(false)}
+              onClick={() => setSelectedMoment(null)}
               className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-colors"
               aria-label="Close photo preview"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="max-h-[80vh] overflow-hidden bg-neutral-950 flex items-center justify-center">
+            <div className="max-h-[75vh] overflow-hidden bg-neutral-950 flex items-center justify-center">
               <img
-                src="/therapist/yehya-hassan-clinic.jpg"
-                alt="Received on 30 August 2026"
-                className="max-h-[80vh] w-auto object-contain"
+                src={selectedMoment.imageUrl}
+                alt={selectedMoment.title || selectedMoment.date}
+                className="max-h-[75vh] w-auto object-contain"
               />
             </div>
 
             <div className="p-4 sm:p-5 bg-white border-t border-neutral-200 space-y-1 text-center sm:text-left">
               <p className="text-xs sm:text-sm text-neutral-700 italic leading-relaxed font-sans">
-                “Today, I received this beautiful piece of art from my client. It means a lot to me. Thank you, dear.”
+                “{selectedMoment.caption}”
               </p>
               <span className="text-[11px] font-medium text-neutral-400 block font-mono">
-                30 August 2026
+                {selectedMoment.date}
               </span>
             </div>
           </div>

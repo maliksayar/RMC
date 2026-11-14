@@ -5,7 +5,8 @@ import {
   AccessPin,
   InterventionVideo,
   BlogArticle,
-  SystemNotification
+  SystemNotification,
+  WordMoment
 } from '../types';
 
 // Convert DB snake_case to frontend camelCase & vice-versa
@@ -476,6 +477,67 @@ export const dbService = {
       return !error;
     } catch (e) {
       console.warn('Supabase markNotificationRead error:', e);
+      return false;
+    }
+  },
+
+  // ===============================
+  // WORDS AND MOMENTS
+  // ===============================
+  async getMoments(): Promise<WordMoment[] | null> {
+    if (!isSupabaseConfigured) return null;
+    try {
+      const { data, error } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error || !data) return null;
+
+      return data.map((item) => ({
+        id: item.id,
+        imageUrl: item.image_url,
+        caption: item.caption,
+        date: item.date,
+        title: item.title,
+        createdAt: item.created_at
+      }));
+    } catch (e) {
+      console.warn('Supabase getMoments error:', e);
+      return null;
+    }
+  },
+
+  async createMoment(moment: WordMoment): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const { error } = await supabase.from('moments').upsert({
+        id: moment.id,
+        image_url: moment.imageUrl,
+        caption: moment.caption,
+        date: moment.date,
+        title: moment.title || '',
+        created_at: moment.createdAt || new Date().toISOString()
+      });
+
+      if (error) {
+        console.error('Supabase createMoment error:', error);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn('Supabase createMoment error:', e);
+      return false;
+    }
+  },
+
+  async deleteMoment(id: string): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    try {
+      const { error } = await supabase.from('moments').delete().eq('id', id);
+      return !error;
+    } catch (e) {
+      console.warn('Supabase deleteMoment error:', e);
       return false;
     }
   }

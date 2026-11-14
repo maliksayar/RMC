@@ -61,6 +61,9 @@ export const AdminDashboard: React.FC = () => {
     articles,
     publishArticle,
     deleteArticle,
+    moments,
+    addMoment,
+    deleteMoment,
     notifications,
     broadcastNotification,
     isSupabaseLive,
@@ -68,7 +71,7 @@ export const AdminDashboard: React.FC = () => {
     updateUserProfile
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'pins' | 'videos' | 'articles' | 'broadcast' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'pins' | 'videos' | 'articles' | 'moments' | 'broadcast' | 'profile'>('overview');
 
   // Doctor & Clinic Profile State
   const [docName, setDocName] = useState(currentUser?.name || 'Yehya Hassan');
@@ -135,6 +138,21 @@ export const AdminDashboard: React.FC = () => {
   const [newArticleCategory, setNewArticleCategory] = useState('Anxiety');
   const [newArticleSummary, setNewArticleSummary] = useState('');
   const [newArticleBody, setNewArticleBody] = useState('');
+
+  // New Moment (Words & Moments Gallery) State
+  const [showAddMomentModal, setShowAddMomentModal] = useState(false);
+  const [momentFile, setMomentFile] = useState<File | null>(null);
+  const [momentUploadProgress, setMomentUploadProgress] = useState<number>(0);
+  const [isUploadingMoment, setIsUploadingMoment] = useState<boolean>(false);
+  const [uploadedMomentImageUrl, setUploadedMomentImageUrl] = useState<string>('');
+  const [momentUploadError, setMomentUploadError] = useState<string>('');
+  const [manualMomentImageUrl, setManualMomentImageUrl] = useState<string>('');
+  const [showManualMomentUrlInput, setShowManualMomentUrlInput] = useState<boolean>(false);
+  const [newMomentCaption, setNewMomentCaption] = useState<string>('');
+  const [newMomentDate, setNewMomentDate] = useState<string>(() => {
+    return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  });
+  const [newMomentTitle, setNewMomentTitle] = useState<string>('');
 
   // Doctor Quick Appointment State
   const [showAddAptModal, setShowAddAptModal] = useState(false);
@@ -298,6 +316,70 @@ export const AdminDashboard: React.FC = () => {
     setNewArticleBody('');
   };
 
+  const resetMomentForm = () => {
+    setShowAddMomentModal(false);
+    setMomentFile(null);
+    setMomentUploadProgress(0);
+    setIsUploadingMoment(false);
+    setUploadedMomentImageUrl('');
+    setMomentUploadError('');
+    setManualMomentImageUrl('');
+    setShowManualMomentUrlInput(false);
+    setNewMomentCaption('');
+    setNewMomentTitle('');
+    setNewMomentDate(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }));
+  };
+
+  const handleMomentFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMomentUploadError('Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    setMomentFile(file);
+    setMomentUploadError('');
+    setIsUploadingMoment(true);
+    setMomentUploadProgress(15);
+
+    try {
+      const url = await cloudinaryService.uploadImage(file, (percent) => {
+        setMomentUploadProgress(percent);
+      });
+      setUploadedMomentImageUrl(url);
+      setMomentUploadProgress(100);
+    } catch (err: any) {
+      console.error('Cloudinary image upload error:', err);
+      setMomentUploadError(err?.message || 'Failed to upload photo. You can paste a direct image URL instead.');
+    } finally {
+      setIsUploadingMoment(false);
+    }
+  };
+
+  const handleAddMoment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalImageUrl = (uploadedMomentImageUrl || manualMomentImageUrl).trim();
+    if (!finalImageUrl) {
+      alert('Please choose a photo to upload or paste an image URL.');
+      return;
+    }
+    if (!newMomentCaption.trim()) {
+      alert('Please enter a caption for the moment.');
+      return;
+    }
+
+    await addMoment({
+      imageUrl: finalImageUrl,
+      caption: newMomentCaption.trim(),
+      date: newMomentDate.trim() || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+      title: newMomentTitle.trim() || undefined
+    });
+
+    resetMomentForm();
+  };
+
   const handleAddAppointment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAptName || !newAptPhone) {
@@ -427,6 +509,7 @@ export const AdminDashboard: React.FC = () => {
           { id: 'pins', label: 'Prescription PINs', icon: KeyRound, count: pins.length },
           { id: 'videos', label: 'Interventions Library', icon: Video, count: interventions.length },
           { id: 'articles', label: 'Articles & Guides', icon: FileText, count: articles.length },
+          { id: 'moments', label: 'Words & Moments', icon: Sparkles, count: moments.length },
           { id: 'broadcast', label: 'Notification Center', icon: Bell, count: notifications.length },
           { id: 'profile', label: 'Doctor Profile', icon: UserIcon, count: null }
         ].map((tab) => {
@@ -1423,6 +1506,112 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
+      {/* TAB: WORDS & MOMENTS GALLERY (CLIENT ARTWORK & TOKENS OF GRATITUDE) */}
+      {/* ========================================================================= */}
+      {activeTab === 'moments' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
+            <div>
+              <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded font-bold">
+                Public Gallery Management
+              </span>
+              <h2 className="font-serif text-2xl font-bold text-neutral-950 mt-1">
+                Words and Moments Gallery
+              </h2>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Manage client artwork, appreciation letters, and tokens of gratitude displayed in Section 7 of the clinic homepage. Only you (Yehya Hassan) can add and manage these photos.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAddMomentModal(true)}
+              className="px-4 py-2.5 bg-neutral-950 text-white text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-neutral-800 flex items-center gap-2 shadow-xs transition-colors self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Photo & Caption</span>
+            </button>
+          </div>
+
+          {moments.length === 0 ? (
+            <div className="bg-white rounded-2xl border-2 border-dashed border-neutral-200 p-12 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 bg-neutral-100 rounded-full flex items-center justify-center mx-auto text-neutral-500">
+                <Sparkles className="w-6 h-6 text-amber-500" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h3 className="font-serif text-lg font-bold text-neutral-950">
+                  No Moments Added Yet
+                </h3>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Add photos of artwork, handwritten letters, and tokens of gratitude gifted by clients to inspire hope and showcase therapeutic breakthroughs.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddMomentModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add First Moment</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {moments.map((moment) => (
+                <div
+                  key={moment.id}
+                  className="bg-white rounded-xl border border-neutral-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative aspect-4/5 w-full bg-neutral-900 overflow-hidden">
+                      <img
+                        src={moment.imageUrl}
+                        alt={moment.title || moment.date}
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <div className="absolute top-2 right-2 bg-black/70 text-white px-2.5 py-1 rounded text-[10px] font-mono">
+                        {moment.date}
+                      </div>
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      {moment.title && (
+                        <h4 className="font-serif font-bold text-sm text-neutral-950">
+                          {moment.title}
+                        </h4>
+                      )}
+                      <p className="text-xs text-neutral-700 italic leading-relaxed">
+                        “{moment.caption}”
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between text-xs">
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      ID: {moment.id.slice(0, 16)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this moment from the homepage gallery?')) {
+                          deleteMoment(moment.id);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-red-600 hover:text-red-800 font-semibold text-[11px] px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                      title="Delete Moment"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* TAB 6: NOTIFICATION & BROADCAST CENTER */}
       {/* ========================================================================= */}
       {activeTab === 'broadcast' && (
@@ -2131,6 +2320,213 @@ export const AdminDashboard: React.FC = () => {
                   className="px-5 py-2 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider"
                 >
                   Publish Article
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ADD WORDS & MOMENTS PHOTO */}
+      {/* ========================================================================= */}
+      {showAddMomentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full border border-neutral-200 shadow-2xl p-6 space-y-4 animate-in fade-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+              <div>
+                <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400">
+                  Section 7 · Homepage
+                </span>
+                <h3 className="font-serif text-lg font-bold text-neutral-950">
+                  Add Word & Moment Photo
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={resetMomentForm}
+                className="text-neutral-400 hover:text-black transition-colors"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddMoment} className="space-y-4">
+              {/* Photo Upload Zone */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1.5">
+                  Client Artwork / Gratitude Photo *
+                </label>
+
+                {uploadedMomentImageUrl ? (
+                  <div className="relative rounded-xl border border-neutral-200 overflow-hidden bg-neutral-950 p-2 flex items-center justify-center">
+                    <img
+                      src={uploadedMomentImageUrl}
+                      alt="Uploaded preview"
+                      className="max-h-48 w-auto rounded object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadedMomentImageUrl('');
+                        setMomentFile(null);
+                        setMomentUploadProgress(0);
+                      }}
+                      className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full shadow-md text-xs cursor-pointer"
+                      title="Remove and change photo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="moment-file-input"
+                      className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                        isUploadingMoment
+                          ? 'border-neutral-400 bg-neutral-50 cursor-wait'
+                          : 'border-neutral-300 hover:border-black bg-neutral-50/60 hover:bg-neutral-50'
+                      }`}
+                    >
+                      <input
+                        id="moment-file-input"
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingMoment}
+                        onChange={handleMomentFileSelect}
+                        className="hidden"
+                      />
+
+                      {isUploadingMoment ? (
+                        <div className="space-y-2 text-center w-full max-w-xs">
+                          <Loader2 className="w-7 h-7 text-black animate-spin mx-auto" />
+                          <p className="text-xs font-semibold text-neutral-800">
+                            Uploading photo to Cloudinary...
+                          </p>
+                          <div className="w-full bg-neutral-200 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="bg-black h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${momentUploadProgress}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-neutral-500 font-mono">
+                            {momentUploadProgress}%
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-1.5">
+                          <div className="w-10 h-10 rounded-full bg-neutral-200/80 flex items-center justify-center mx-auto text-neutral-700">
+                            <UploadCloud className="w-5 h-5" />
+                          </div>
+                          <p className="text-xs font-semibold text-neutral-800">
+                            Click to select photo or drag and drop
+                          </p>
+                          <p className="text-[10px] text-neutral-500">
+                            JPG, PNG, WebP · Automatically hosted on Cloudinary
+                          </p>
+                          {isCloudinaryConfigured && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              ● Cloudinary Connected ({cloudinaryService.cloudName})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </label>
+
+                    {momentUploadError && (
+                      <p className="text-[11px] text-red-600 flex items-center gap-1 font-sans">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{momentUploadError}</span>
+                      </p>
+                    )}
+
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => setShowManualMomentUrlInput(!showManualMomentUrlInput)}
+                        className="text-[11px] text-neutral-500 hover:text-black underline underline-offset-2"
+                      >
+                        {showManualMomentUrlInput ? 'Hide direct link input' : 'Or paste direct image URL'}
+                      </button>
+                    </div>
+
+                    {showManualMomentUrlInput && (
+                      <div className="pt-1">
+                        <input
+                          type="url"
+                          value={manualMomentImageUrl}
+                          onChange={(e) => setManualMomentImageUrl(e.target.value)}
+                          placeholder="https://... or /therapist/..."
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Caption */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
+                  Caption / Quote *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={newMomentCaption}
+                  onChange={(e) => setNewMomentCaption(e.target.value)}
+                  placeholder="e.g. Today, I received this beautiful piece of art from my client. It means a lot to me. Thank you, dear."
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-hidden focus:border-black leading-relaxed"
+                />
+                <span className="text-[10px] text-neutral-400 block mt-0.5">
+                  This text is shown in italics directly underneath the photo on the homepage.
+                </span>
+              </div>
+
+              {/* Date & Optional Title */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
+                    Date Displayed *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newMomentDate}
+                    onChange={(e) => setNewMomentDate(e.target.value)}
+                    placeholder="e.g. 30 August 2026"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
+                    Title / Subheading (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newMomentTitle}
+                    onChange={(e) => setNewMomentTitle(e.target.value)}
+                    placeholder="e.g. Client Artwork Gift"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={resetMomentForm}
+                  className="px-4 py-2 border border-neutral-300 rounded-lg text-xs font-semibold text-neutral-700 hover:bg-neutral-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploadingMoment}
+                  className="px-5 py-2 bg-neutral-950 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-neutral-800 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Publish to Homepage</span>
                 </button>
               </div>
             </form>

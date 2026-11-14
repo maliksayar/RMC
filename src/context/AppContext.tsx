@@ -7,13 +7,15 @@ import {
   AccessPin,
   Appointment,
   BlogArticle,
-  SystemNotification
+  SystemNotification,
+  WordMoment
 } from '../types';
 import {
   INITIAL_INTERVENTIONS,
   INITIAL_PINS,
   INITIAL_APPOINTMENTS,
   INITIAL_ARTICLES,
+  INITIAL_MOMENTS,
   DEMO_USERS
 } from '../data/initialData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -77,6 +79,11 @@ interface AppContextType {
   setActiveVideo: (video: InterventionVideo | null) => void;
   activeArticle: BlogArticle | null;
   setActiveArticle: (article: BlogArticle | null) => void;
+
+  // Words & Moments Gallery
+  moments: WordMoment[];
+  addMoment: (moment: Omit<WordMoment, 'id' | 'createdAt'>) => Promise<WordMoment>;
+  deleteMoment: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -216,6 +223,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return [];
   });
 
+  // Words & Moments Gallery
+  const [moments, setMoments] = useState<WordMoment[]>(() => {
+    const saved = localStorage.getItem('rmc_moments');
+    if (saved) {
+      try {
+        const parsed: WordMoment[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        return INITIAL_MOMENTS;
+      }
+    }
+    return INITIAL_MOMENTS;
+  });
+
   // Notifications
   const [notifications, setNotifications] = useState<SystemNotification[]>(() => {
     return [
@@ -283,6 +304,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('rmc_articles', JSON.stringify(articles));
   }, [articles]);
+
+  useEffect(() => {
+    localStorage.setItem('rmc_moments', JSON.stringify(moments));
+  }, [moments]);
 
   // ==========================================
   // INITIALIZE SUPABASE SESSION & DATABASE SYNC
@@ -407,12 +432,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 2. Fetch data from Supabase DB
     const loadSupabaseData = async () => {
       try {
-        const [dbInterventions, dbAppointments, dbPins, dbArticles, dbNotifications] = await Promise.all([
+        const [dbInterventions, dbAppointments, dbPins, dbArticles, dbNotifications, dbMoments] = await Promise.all([
           dbService.getInterventions(),
           dbService.getAppointments(),
           dbService.getPins(),
           dbService.getArticles(),
-          dbService.getNotifications()
+          dbService.getNotifications(),
+          dbService.getMoments()
         ]);
 
         if (dbInterventions !== null) {
@@ -458,6 +484,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const cleanArticles = dbArticles.filter((a) => !DUMMY_ARTICLE_IDS.has(a.id));
           setArticles(cleanArticles);
         }
+        if (dbMoments !== null && dbMoments.length > 0) {
+          setMoments(dbMoments);
+        }
         if (dbNotifications && dbNotifications.length > 0) {
           setNotifications(dbNotifications);
         }
@@ -483,9 +512,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
       .subscribe();
 
+    // 4. Realtime subscription: sync words & moments dynamically
+    const momentsChannel = supabase
+      .channel('public:moments')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'moments' },
+        async () => {
+          const freshMoments = await dbService.getMoments();
+          if (freshMoments && freshMoments.length > 0) {
+            setMoments(freshMoments);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       authListener?.subscription?.unsubscribe();
       supabase.removeChannel(channel);
+      supabase.removeChannel(momentsChannel);
     };
   }, []);
 
@@ -910,6 +955,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Words & Moments Gallery
+  const addMoment = async (momentData: Omit<WordMoment, 'id' | 'createdAt'>): Promise<WordMoment> => {
+    const newMoment: WordMoment = {
+      ...momentData,
+      id: `moment-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setMoments((prev) => [newMoment, ...prev]);
+
+    if (isSupabaseConfigured) {
+      try {
+        await dbService.createMoment(newMoment);
+      } catch (err) {
+        console.warn('Failed to save moment to Supabase:', err);
+      }
+    }
+
+    return newMoment;
+  };
+
+  const deleteMoment = async (id: string): Promise<void> => {
+    setMoments((prev) => prev.filter((m) => m.id !== id));
+
+    if (isSupabaseConfigured) {
+      try {
+        await dbService.deleteMoment(id);
+      } catch (err) {
+        console.warn('Failed to delete moment from Supabase:', err);
+      }
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -940,6 +1017,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         articles,
         publishArticle,
         deleteArticle,
+        moments,
+        addMoment,
+        deleteMoment,
         notifications,
         markNotificationAsRead,
         clearNotifications,

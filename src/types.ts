@@ -131,3 +131,12 @@ export interface SystemNotification {
   read: boolean;
   type: 'pin' | 'appointment' | 'system' | 'library';
 }
+
+export interface WordMoment {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  date: string;
+  title?: string;
+  createdAt?: string;
+}

@@ -67,7 +67,7 @@ export const AboutPage: React.FC = () => {
 
             <div className="space-y-3.5 text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
               <p>
-                I am a trained Psychotherapist and Clinical Hypnotherapist with an integrative approach to psychological treatment.
+                I am a Psychotherapist and Clinical Hypnotherapist with an integrative approach to psychological treatment.
               </p>
               <p>
                 My work focuses on looking beyond symptoms to understand the underlying beliefs, learned patterns, emotional responses, and behaviours that may contribute to psychological difficulties.

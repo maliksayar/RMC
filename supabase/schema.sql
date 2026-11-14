@@ -224,6 +224,29 @@ CREATE POLICY "Allow managing notifications"
   USING (true);
 
 
+-- 8. Create MOMENTS Table (Words & Moments Photo Gallery)
+CREATE TABLE IF NOT EXISTS public.moments (
+  id TEXT PRIMARY KEY,
+  image_url TEXT NOT NULL,
+  caption TEXT NOT NULL,
+  date TEXT NOT NULL,
+  title TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.moments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Moments are viewable by everyone" ON public.moments;
+CREATE POLICY "Moments are viewable by everyone"
+  ON public.moments FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Allow managing moments" ON public.moments;
+CREATE POLICY "Allow managing moments"
+  ON public.moments FOR ALL
+  USING (true);
+
+
 -- ==============================================================================
--- SCHEMA READY: ALL VIDEOS, ARTICLES, APPOINTMENTS AND PINS ARE MANAGED DYNAMICALLY
+-- SCHEMA READY: ALL VIDEOS, ARTICLES, MOMENTS, APPOINTMENTS AND PINS ARE MANAGED DYNAMICALLY
 -- ==============================================================================
