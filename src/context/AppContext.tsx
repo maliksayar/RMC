@@ -103,7 +103,17 @@ const DUMMY_VIDEO_IDS = new Set([
   'edu-what-is-cbt',
   'edu-what-is-hypnotherapy',
   'edu-what-is-dissociation',
-  'edu-when-to-consider-help'
+  'edu-when-to-consider-help',
+  'video-1793893390377',
+  'cbt-insomnia-sleep-hygiene',
+  'video-1793893414922',
+  'systematic-desensitization',
+  'thought-defusion-worry',
+  'mindfulness-meditation',
+  'behavioural-activation',
+  'cbt-basics',
+  'video-1793893208409',
+  'guided-imagery'
 ]);
 const DUMMY_ARTICLE_IDS = new Set([
   'art-1',
@@ -141,8 +151,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const role: UserRole = isAdmin ? 'admin' : (currentUser?.role || 'patient');
   const isSupabaseLive = isSupabaseConfigured;
 
-  // Interventions library (Dynamic doctor uploads)
+  // Interventions library (Dynamic doctor uploads - reset cleanly for fresh doctor management)
   const [interventions, setInterventions] = useState<InterventionVideo[]>(() => {
+    // One-time client purge of old cached videos across all devices
+    if (!localStorage.getItem('rmc_interventions_reset_v3')) {
+      localStorage.removeItem('rmc_interventions');
+      localStorage.removeItem('rmc_unlocked_videos');
+      localStorage.setItem('rmc_interventions_reset_v3', 'true');
+      return [];
+    }
+
     const saved = localStorage.getItem('rmc_interventions');
     if (saved) {
       try {
